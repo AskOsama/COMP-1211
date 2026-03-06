@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأسبوع الثاني: التخزين وعمليات نظام التشغيل وإدارة العمليات</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <a href="week2.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <header>
+        <h1>التخزين وعمليات نظام التشغيل وإدارة العمليات</h1>
+        <p class="subtitle">الأسبوع الثاني: فهم كيفية عمل أنظمة التشغيل</p>
+    </header>
+
+    <nav class="table-of-contents no-print">
+        <h2>المحتويات</h2>
+        <ul>
+            <li><a href="#objectives">أهداف التعلم</a></li>
+            <li><a href="#storage-structure">1. هيكل التخزين</a></li>
+            <li><a href="#storage-definitions">2. تعريفات التخزين</a></li>
+            <li><a href="#storage-hierarchy">3. التسلسل الهرمي للتخزين</a></li>
+            <li><a href="#dma">4. الوصول المباشر للذاكرة (DMA)</a></li>
+            <li><a href="#os-operations">5. عمليات نظام التشغيل</a></li>
+            <li><a href="#multiprogramming">6. البرمجة المتعددة</a></li>
+            <li><a href="#multitasking">7. تعدد المهام (المشاركة الزمنية)</a></li>
+            <li><a href="#memory-layout">8. تخطيط الذاكرة</a></li>
+            <li><a href="#dual-mode">9. التشغيل ثنائي الوضع</a></li>
+            <li><a href="#mode-transition">10. انتقال الوضع</a></li>
+            <li><a href="#process-management">11. إدارة العمليات</a></li>
+            <li><a href="#memory-management">12. إدارة الذاكرة</a></li>
+            <li><a href="#summary">الملخص</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Learning Objectives -->
+        <section id="objectives" class="learning-objectives">
+            <h2>أهداف التعلم</h2>
+            <p>بنهاية هذه الجلسة، ستكون قادراً على:</p>
+            <ul>
+                <li>وصف أنواع التخزين المختلفة وخصائصها</li>
+                <li>شرح التسلسل الهرمي للتخزين ومفهوم التخزين المؤقت</li>
+                <li>فهم الوصول المباشر للذاكرة (DMA) وفوائده</li>
+                <li>وصف عمليات نظام التشغيل الأساسية وكيفية عملها</li>
+                <li>التمييز بين البرمجة المتعددة وتعدد المهام</li>
+            </ul>
+        </section>
+
+        <!-- Section 1: Storage Structure -->
+        <section id="storage-structure" class="content-section">
+            <h2>1. هيكل التخزين</h2>
+
+            <p>تحتاج أنظمة الحاسوب إلى أنواع مختلفة من التخزين للعمل بكفاءة. الفئتان الرئيسيتان هما:</p>
+
+            <article class="os-component">
+                <h4>الذاكرة الرئيسية (RAM)</h4>
+                <p><strong>ذاكرة الوصول العشوائي</strong> هي التخزين الأساسي الذي يمكن للمعالج الوصول إليه مباشرة:</p>
+                <ul>
+                    <li><strong>متطايرة</strong> - تُفقد المحتويات عند انقطاع الطاقة</li>
+                    <li><strong>وصول سريع</strong> - يمكن للمعالج القراءة/الكتابة بسرعة</li>
+                    <li><strong>حجم محدود</strong> - عادة 8 جيجابايت إلى 64 جيجابايت في الحواسيب الحديثة</li>
+                    <li><strong>قابلة للعنونة مباشرة</strong> - يستخدم المعالج عناوين الذاكرة للوصول للبيانات</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>التخزين الثانوي</h4>
+                <p>يوفر تخزيناً <strong>غير متطاير</strong> للبرامج والبيانات:</p>
+                <ul>
+                    <li><strong>محركات الأقراص الصلبة (HDD)</strong> - تخزين مغناطيسي، سعة عالية، أبطأ</li>
+                    <li><strong>محركات الحالة الصلبة (SSD)</strong> - ذاكرة فلاش، أسرع من HDD</li>
+                    <li><strong>غير متطاير</strong> - تبقى البيانات حتى عند انقطاع الطاقة</li>
+                    <li><strong>سعة كبيرة</strong> - يمكن تخزين تيرابايت من البيانات</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> يجب تحميل البرامج من التخزين الثانوي إلى الذاكرة الرئيسية قبل تنفيذها. لا يستطيع المعالج تنفيذ البرامج المخزنة على القرص مباشرة.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Storage Definitions -->
+        <section id="storage-definitions" class="content-section">
+            <h2>2. تعريفات التخزين</h2>
+
+            <p>فهم التخزين يتطلب معرفة وحدات القياس الأساسية:</p>
+
+            <div class="definition">
+                <h3>الوحدات الأساسية</h3>
+                <p><strong>البت</strong> هو أصغر وحدة بيانات (0 أو 1). <strong>البايت</strong> هو مجموعة من 8 بتات.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">جدول وحدات التخزين</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الوحدة</th>
+                            <th>الرمز</th>
+                            <th>الحجم (بايت)</th>
+                            <th>القيمة التقريبية</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>كيلوبايت</strong></td>
+                            <td>KB</td>
+                            <td>2<sup>10</sup></td>
+                            <td>1,024 بايت (~1 ألف)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ميجابايت</strong></td>
+                            <td>MB</td>
+                            <td>2<sup>20</sup></td>
+                            <td>1,048,576 بايت (~1 مليون)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>جيجابايت</strong></td>
+                            <td>GB</td>
+                            <td>2<sup>30</sup></td>
+                            <td>~1 مليار بايت</td>
+                        </tr>
+                        <tr>
+                            <td><strong>تيرابايت</strong></td>
+                            <td>TB</td>
+                            <td>2<sup>40</sup></td>
+                            <td>~1 تريليون بايت</td>
+                        </tr>
+                        <tr>
+                            <td><strong>بيتابايت</strong></td>
+                            <td>PB</td>
+                            <td>2<sup>50</sup></td>
+                            <td>~1 كوادريليون بايت</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="example">
+                <h4>أمثلة من الواقع</h4>
+                <ul>
+                    <li><strong>1 كيلوبايت</strong> - بريد إلكتروني قصير أو مستند نصي</li>
+                    <li><strong>1 ميجابايت</strong> - صورة عالية الجودة أو دقيقة من صوت MP3</li>
+                    <li><strong>1 جيجابايت</strong> - حوالي 250 أغنية MP3 أو فيديو HD قصير</li>
+                    <li><strong>1 تيرابايت</strong> - حوالي 500 ساعة من فيديو HD</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 3: Storage Hierarchy -->
+        <section id="storage-hierarchy" class="content-section">
+            <h2>3. التسلسل الهرمي للتخزين</h2>
+
+            <p>أجهزة التخزين منظمة في تسلسل هرمي بناءً على <strong>السرعة</strong> و<strong>التكلفة</strong> و<strong>السعة</strong>:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">هرم التسلسل التخزيني</h3>
+                </div>
+                <div class="storage-pyramid">
+                    <div class="pyramid-level level-registers">
+                        <span class="level-name">المسجلات</span>
+                        <span class="level-info">الأسرع، الأغلى، الأصغر</span>
+                    </div>
+                    <div class="pyramid-level level-cache">
+                        <span class="level-name">الذاكرة المخبئية (L1, L2, L3)</span>
+                        <span class="level-info">سريعة جداً، مكلفة، صغيرة (KB-MB)</span>
+                    </div>
+                    <div class="pyramid-level level-ram">
+                        <span class="level-name">الذاكرة الرئيسية (RAM)</span>
+                        <span class="level-info">سريعة، تكلفة معتدلة، متوسطة (GB)</span>
+                    </div>
+                    <div class="pyramid-level level-ssd">
+                        <span class="level-name">محرك الحالة الصلبة (SSD)</span>
+                        <span class="level-info">سرعة معتدلة، تكلفة أقل، كبيرة (TB)</span>
+                    </div>
+                    <div class="pyramid-level level-hdd">
+                        <span class="level-name">محرك القرص الصلب (HDD)</span>
+                        <span class="level-info">أبطأ، الأرخص، الأكبر (TB)</span>
+                    </div>
+                </div>
+                <p class="diagram-note">كلما نزلنا في الهرم: تقل السرعة، تزداد السعة، تقل التكلفة لكل بايت</p>
+            </div>
+
+            <a href="../demos/storage_hierarchy_demo.html" class="demo-link">تشغيل العرض التفاعلي للتسلسل الهرمي للتخزين</a>
+
+            <h3>المفاهيم الأساسية</h3>
+
+            <article class="os-component">
+                <h4>التخزين المؤقت (Caching)</h4>
+                <p><strong>التخزين المؤقت</strong> هو عملية نسخ البيانات المستخدمة بكثرة إلى تخزين أسرع:</p>
+                <ul>
+                    <li>تُنسخ البيانات من التخزين الأبطأ إلى الأسرع</li>
+                    <li>عند الحاجة للبيانات، يُفحص التخزين الأسرع أولاً</li>
+                    <li>يحسن أداء النظام بشكل كبير</li>
+                    <li>يُستخدم على مستويات متعددة (ذاكرة المعالج المخبئية، ذاكرة القرص المخبئية، ذاكرة الويب المخبئية)</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>التطاير (Volatility)</h4>
+                <ul>
+                    <li><strong>التخزين المتطاير</strong> - يفقد البيانات عند انقطاع الطاقة (المسجلات، الذاكرة المخبئية، RAM)</li>
+                    <li><strong>التخزين غير المتطاير</strong> - يحتفظ بالبيانات بدون طاقة (SSD، HDD)</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>المقايضة:</strong> هناك دائماً مقايضة بين السرعة والتكلفة والسعة. التخزين الأسرع أغلى وله سعة أقل. يسمح التسلسل الهرمي للأنظمة بموازنة هذه العوامل.</p>
+            </div>
+        </section>
+
+        <!-- Section 4: DMA -->
+        <section id="dma" class="content-section">
+            <h2>4. الوصول المباشر للذاكرة (DMA)</h2>
+
+            <div class="definition">
+                <h3>ما هو DMA؟</h3>
+                <p><strong>الوصول المباشر للذاكرة</strong> هو ميزة تسمح لأجهزة الإدخال/الإخراج بنقل البيانات مباشرة من/إلى الذاكرة دون إشراك المعالج في كل بايت.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">نقل بيانات DMA</h3>
+                </div>
+                <div class="dma-diagram">
+                    <div class="dma-components">
+                        <div class="dma-box cpu-box">المعالج</div>
+                        <div class="dma-box memory-box">الذاكرة</div>
+                        <div class="dma-box dma-controller-box">متحكم DMA</div>
+                        <div class="dma-box device-box">جهاز I/O</div>
+                    </div>
+                    <div class="dma-flow">
+                        <div class="flow-step">1. المعالج يبدأ النقل</div>
+                        <div class="flow-step">2. متحكم DMA يتولى نقل البيانات</div>
+                        <div class="flow-step">3. المعالج حر للقيام بعمل آخر</div>
+                        <div class="flow-step">4. DMA يقاطع المعالج عند الانتهاء</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>فوائد DMA</h3>
+            <ul>
+                <li><strong>يحرر المعالج</strong> - يمكن للمعالج تنفيذ مهام أخرى أثناء نقل البيانات</li>
+                <li><strong>I/O عالي السرعة</strong> - البيانات تتحرك بسرعة الذاكرة، لا بسرعة تعليمات المعالج</li>
+                <li><strong>مقاطعة واحدة لكل كتلة</strong> - بدلاً من مقاطعة واحدة لكل بايت</li>
+                <li><strong>فعال للنقل الكبير</strong> - ضروري لعمليات القرص والشبكة</li>
+            </ul>
+
+            <div class="example">
+                <h4>بدون DMA مقابل مع DMA</h4>
+                <p><strong>بدون DMA:</strong> يجب على المعالج قراءة كل بايت من الجهاز وتخزينه في الذاكرة. لنقل 1 ميجابايت بمعدل 1 بايت لكل تعليمة = مليون دورة معالج مهدرة.</p>
+                <p><strong>مع DMA:</strong> المعالج يهيئ النقل مرة واحدة، ومتحكم DMA يتولى الباقي. المعالج يستخدم فقط بضع دورات للإعداد ومقاطعة الاكتمال.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: OS Operations -->
+        <section id="os-operations" class="content-section">
+            <h2>5. عمليات نظام التشغيل</h2>
+
+            <p>عند بدء تشغيل الحاسوب، تحدث عدة عمليات رئيسية:</p>
+
+            <article class="os-component">
+                <h4>برنامج الإقلاع (Bootstrap)</h4>
+                <p><strong>برنامج الإقلاع</strong> هو أول كود يعمل عند تشغيل الحاسوب:</p>
+                <ul>
+                    <li>مخزن في ROM أو EEPROM (البرنامج الثابت)</li>
+                    <li>يهيئ مسجلات المعالج ومتحكمات الأجهزة والذاكرة</li>
+                    <li>يحدد ويحمّل نواة نظام التشغيل في الذاكرة</li>
+                    <li>يبدأ تنفيذ النواة</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>خدمات النظام (Daemons)</h4>
+                <p><strong>الخدمات</strong> هي عمليات خلفية تبدأ أثناء الإقلاع وتعمل باستمرار:</p>
+                <ul>
+                    <li>توفر خدمات النظام (الطباعة، الشبكات، الجدولة)</li>
+                    <li>تعمل خارج النواة لكن تدعم عمليات النظام</li>
+                    <li>أمثلة: sshd (الصدفة الآمنة)، httpd (خادم الويب)، cron (المجدول)</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>التشغيل المدفوع بالمقاطعات</h4>
+                <p>أنظمة التشغيل الحديثة <strong>مدفوعة بالمقاطعات</strong>:</p>
+                <ul>
+                    <li><strong>مقاطعات الأجهزة</strong> - تولدها الأجهزة (لوحة المفاتيح، القرص، الشبكة)</li>
+                    <li><strong>مقاطعات البرمجيات (Traps)</strong> - تولدها البرامج (استدعاءات النظام، الأخطاء)</li>
+                    <li>المقاطعات تشير لنظام التشغيل بأن حدثاً يحتاج انتباهاً</li>
+                    <li>تسمح بمعالجة فعالة لـ I/O والأحداث الأخرى</li>
+                </ul>
+            </article>
+        </section>
+
+        <!-- Section 6: Multiprogramming -->
+        <section id="multiprogramming" class="content-section">
+            <h2>6. البرمجة المتعددة (Multiprogramming)</h2>
+
+            <div class="definition">
+                <h3>ما هي البرمجة المتعددة؟</h3>
+                <p><strong>البرمجة المتعددة</strong> تحتفظ ببرامج متعددة في الذاكرة في وقت واحد لزيادة استغلال المعالج. عندما ينتظر برنامج I/O، يمكن لبرنامج آخر استخدام المعالج.</p>
+            </div>
+
+            <h3>كيف تعمل</h3>
+            <ol>
+                <li>تُحمّل مهام (برامج) متعددة في الذاكرة</li>
+                <li>نظام التشغيل يختار مهمة لبدء التنفيذ (جدولة المهام)</li>
+                <li>عندما تحتاج المهمة الجارية للانتظار (مثلاً لـ I/O)، يتحول النظام لمهمة أخرى</li>
+                <li>هذا يبقي المعالج مشغولاً، مما يحسن الاستغلال</li>
+            </ol>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">البرمجة المتعددة: استغلال المعالج</h3>
+                </div>
+                <div class="multiprogramming-diagram">
+                    <div class="mp-scenario">
+                        <h4>برنامج واحد</h4>
+                        <div class="timeline-visual">
+                            <div class="time-block cpu-block">معالج</div>
+                            <div class="time-block wait-block">انتظار</div>
+                            <div class="time-block cpu-block">معالج</div>
+                            <div class="time-block wait-block">انتظار</div>
+                        </div>
+                        <p>المعالج خامل أثناء انتظار I/O</p>
+                    </div>
+                    <div class="mp-scenario">
+                        <h4>البرمجة المتعددة</h4>
+                        <div class="timeline-visual">
+                            <div class="time-block cpu-block">مهمة أ</div>
+                            <div class="time-block cpu-block-alt">مهمة ب</div>
+                            <div class="time-block cpu-block">مهمة أ</div>
+                            <div class="time-block cpu-block-alt">مهمة ج</div>
+                        </div>
+                        <p>المعالج دائماً مشغول بمهمة ما</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>الهدف:</strong> تعظيم استغلال المعالج بضمان وجود مهمة جاهزة للتشغيل دائماً. هذا مهم خاصة لأنظمة الدفعات حيث تُقدم المهام وتعمل بدون تفاعل المستخدم.</p>
+            </div>
+        </section>
+
+        <!-- Section 7: Multitasking -->
+        <section id="multitasking" class="content-section">
+            <h2>7. تعدد المهام (المشاركة الزمنية)</h2>
+
+            <div class="definition">
+                <h3>ما هو تعدد المهام؟</h3>
+                <p><strong>تعدد المهام</strong> (أو <strong>المشاركة الزمنية</strong>) يوسع البرمجة المتعددة بالتبديل السريع للمعالج بين العمليات، مما يعطي كل مستخدم وهم امتلاك حاسوب خاص.</p>
+            </div>
+
+            <h3>المفاهيم الأساسية</h3>
+
+            <article class="os-component">
+                <h4>العملية (Process)</h4>
+                <p><strong>العملية</strong> هي برنامج قيد التنفيذ. تتضمن:</p>
+                <ul>
+                    <li>كود البرنامج</li>
+                    <li>النشاط الحالي (عداد البرنامج، المسجلات)</li>
+                    <li>مكدس العملية (البيانات المؤقتة)</li>
+                    <li>قسم البيانات (المتغيرات العامة)</li>
+                    <li>الكومة (الذاكرة المخصصة ديناميكياً)</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>جدولة المعالج</h4>
+                <p>عندما تكون عمليات متعددة جاهزة للتشغيل، يجب على النظام اختيار أيها يحصل على المعالج:</p>
+                <ul>
+                    <li><strong>الشريحة الزمنية</strong> - كل عملية تحصل على وقت صغير</li>
+                    <li><strong>تبديل السياق</strong> - حفظ واستعادة حالة العملية</li>
+                    <li><strong>خوارزميات الجدولة</strong> - قواعد اختيار العملية التالية</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>زمن الاستجابة</h4>
+                <p>يهدف تعدد المهام لتوفير <strong>زمن استجابة معقول</strong>:</p>
+                <ul>
+                    <li>المستخدمون يتوقعون استجابات سريعة لمدخلاتهم</li>
+                    <li>الشرائح الزمنية عادة 10-100 ميلي ثانية</li>
+                    <li>التبديل يحدث بسرعة بحيث لا يلاحظه المستخدمون</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>مثال من الواقع</h4>
+                <p>عندما يكون لديك متصفح ويب ومشغل موسيقى ومعالج نصوص مفتوحة في وقت واحد، تعدد المهام يسمح للثلاثة بالظهور كأنها تعمل في نفس الوقت. المعالج يتبدل بينها بسرعة، معطياً كل واحدة دوراً.</p>
+            </div>
+        </section>
+
+        <!-- Section 8: Memory Layout -->
+        <section id="memory-layout" class="content-section">
+            <h2>8. تخطيط الذاكرة في نظام متعدد البرامج</h2>
+
+            <p>في نظام متعدد البرامج، يجب تنظيم الذاكرة لاستيعاب برامج متعددة في وقت واحد:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مخطط تخطيط الذاكرة</h3>
+                </div>
+                <div class="memory-layout-diagram">
+                    <div class="memory-section os-section">
+                        <span class="section-label">نظام التشغيل</span>
+                        <span class="section-detail">النواة، برامج التشغيل، بيانات النظام</span>
+                    </div>
+                    <div class="memory-section process-section p1">
+                        <span class="section-label">العملية 1</span>
+                        <span class="section-detail">الكود + البيانات + المكدس</span>
+                    </div>
+                    <div class="memory-section process-section p2">
+                        <span class="section-label">العملية 2</span>
+                        <span class="section-detail">الكود + البيانات + المكدس</span>
+                    </div>
+                    <div class="memory-section process-section p3">
+                        <span class="section-label">العملية 3</span>
+                        <span class="section-detail">الكود + البيانات + المكدس</span>
+                    </div>
+                    <div class="memory-section process-section p4">
+                        <span class="section-label">العملية 4</span>
+                        <span class="section-detail">الكود + البيانات + المكدس</span>
+                    </div>
+                    <div class="memory-address-labels">
+                        <span>0x00000000</span>
+                        <span>العنوان العالي</span>
+                    </div>
+                </div>
+                <p class="diagram-note">كل عملية لها مساحة ذاكرة محمية خاصة بها. نظام التشغيل يدير التخصيص والحماية.</p>
+            </div>
+
+            <h3>متطلبات إدارة الذاكرة</h3>
+            <ul>
+                <li><strong>التخصيص</strong> - تعيين الذاكرة للعمليات</li>
+                <li><strong>الحماية</strong> - منع العمليات من الوصول لذاكرة بعضها</li>
+                <li><strong>إعادة التموضع</strong> - السماح للبرامج بالعمل في عناوين مختلفة</li>
+                <li><strong>المشاركة</strong> - السماح للعمليات بمشاركة الكود (مثل المكتبات)</li>
+            </ul>
+        </section>
+
+        <!-- Section 9: Dual-mode Operation -->
+        <section id="dual-mode" class="content-section">
+            <h2>9. التشغيل ثنائي الوضع</h2>
+
+            <div class="definition">
+                <h3>لماذا ثنائي الوضع؟</h3>
+                <p>تستخدم أنظمة التشغيل <strong>التشغيل ثنائي الوضع</strong> لحماية النظام من برامج المستخدم الخاطئة أو الضارة. يميز العتاد بين <strong>وضع المستخدم</strong> و<strong>وضع النواة</strong>.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">وضع المستخدم مقابل وضع النواة</h3>
+                </div>
+                <div class="dual-mode-comparison">
+                    <div class="mode-box user-mode-box">
+                        <h4>وضع المستخدم</h4>
+                        <p><strong>بت الوضع = 1</strong></p>
+                        <ul>
+                            <li>وصول محدود للعتاد</li>
+                            <li>لا يمكن تنفيذ تعليمات مميزة</li>
+                            <li>الوصول للذاكرة مقيد</li>
+                            <li>حيث تعمل تطبيقات المستخدم</li>
+                        </ul>
+                    </div>
+                    <div class="mode-box kernel-mode-box">
+                        <h4>وضع النواة</h4>
+                        <p><strong>بت الوضع = 0</strong></p>
+                        <ul>
+                            <li>وصول كامل للعتاد</li>
+                            <li>يمكن تنفيذ جميع التعليمات</li>
+                            <li>وصول غير مقيد للذاكرة</li>
+                            <li>حيث تعمل نواة نظام التشغيل</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>التعليمات المميزة</h3>
+            <p>بعض التعليمات يمكن تنفيذها فقط في وضع النواة:</p>
+            <ul>
+                <li>تعليمات الإدخال/الإخراج (القراءة/الكتابة للأجهزة)</li>
+                <li>تعليمات إدارة الذاكرة</li>
+                <li>تعليمات إدارة المقاطعات</li>
+                <li>التعليمات التي تعدل بت الوضع</li>
+            </ul>
+
+            <div class="key-message">
+                <p><strong>آلية الحماية:</strong> إذا حاول برنامج مستخدم تنفيذ تعليمة مميزة في وضع المستخدم، يولد العتاد trap (استثناء)، ويمكن لنظام التشغيل إنهاء البرنامج المخالف.</p>
+            </div>
+        </section>
+
+        <!-- Section 10: Mode Transition -->
+        <section id="mode-transition" class="content-section">
+            <h2>10. انتقال الوضع</h2>
+
+            <p>ينتقل النظام بين وضع المستخدم ووضع النواة من خلال آليات محددة:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">تدفق انتقال الوضع</h3>
+                </div>
+                <div class="mode-transition-diagram">
+                    <div class="transition-flow">
+                        <div class="mode-state user-state">
+                            <span class="state-label">وضع المستخدم</span>
+                            <span class="state-desc">التطبيق قيد التنفيذ</span>
+                        </div>
+                        <div class="transition-arrow">
+                            <span class="arrow-label">استدعاء نظام / Trap / مقاطعة</span>
+                            <span class="arrow-icon">←</span>
+                        </div>
+                        <div class="mode-state kernel-state">
+                            <span class="state-label">وضع النواة</span>
+                            <span class="state-desc">نظام التشغيل يعالج الطلب</span>
+                        </div>
+                        <div class="transition-arrow return-arrow">
+                            <span class="arrow-icon">→</span>
+                            <span class="arrow-label">العودة من استدعاء النظام</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="../demos/mode_transition_demo.html" class="demo-link">تشغيل العرض التفاعلي لانتقال الوضع</a>
+
+            <h3>آليات الانتقال</h3>
+
+            <article class="os-component">
+                <h4>استدعاءات النظام</h4>
+                <p>برامج المستخدم تطلب خدمات نظام التشغيل عبر <strong>استدعاءات النظام</strong>:</p>
+                <ul>
+                    <li>البرنامج ينفذ تعليمة trap خاصة</li>
+                    <li>العتاد يتحول لوضع النواة</li>
+                    <li>نظام التشغيل ينفذ الخدمة المطلوبة</li>
+                    <li>التحكم يعود لبرنامج المستخدم في وضع المستخدم</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>المقاطعات و Traps</h4>
+                <ul>
+                    <li><strong>المقاطعة</strong> - حدث خارجي (إشارة عتادية)</li>
+                    <li><strong>Trap</strong> - حدث داخلي (مولد برمجياً، مثل استدعاء نظام أو خطأ)</li>
+                    <li>كلاهما يسبب انتقالاً من وضع المستخدم إلى وضع النواة</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>مثال: فتح ملف</h4>
+                <ol>
+                    <li>برنامج المستخدم يستدعي <code>open("file.txt")</code> - وضع المستخدم</li>
+                    <li>يحدث trap استدعاء نظام ← التحول لوضع النواة</li>
+                    <li>نظام التشغيل يتحقق من الطلب، يصل لنظام الملفات</li>
+                    <li>نظام التشغيل يعيد مقبض الملف ← التحول لوضع المستخدم</li>
+                    <li>البرنامج يستمر مع مقبض الملف</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Section 11: Process Management -->
+        <section id="process-management" class="content-section">
+            <h2>11. إدارة العمليات</h2>
+
+            <div class="definition">
+                <h3>ما هي العملية؟</h3>
+                <p><strong>العملية</strong> هي برنامج قيد التنفيذ. هي وحدة العمل في نظام الحاسوب الحديث.</p>
+            </div>
+
+            <h3>العملية مقابل البرنامج</h3>
+            <ul>
+                <li><strong>البرنامج</strong> - كيان سلبي مخزن على القرص (ملف تنفيذي)</li>
+                <li><strong>العملية</strong> - كيان نشط مع عداد برنامج وموارد</li>
+                <li>برنامج واحد يمكن أن ينشئ عمليات متعددة (مثل تبويبات المتصفح المتعددة)</li>
+            </ul>
+
+            <h3>موارد العملية</h3>
+            <p>تحتاج العملية لموارد متنوعة لإنجاز مهمتها:</p>
+            <ul>
+                <li><strong>وقت المعالج</strong> - لتنفيذ التعليمات</li>
+                <li><strong>الذاكرة</strong> - للكود والبيانات والمكدس</li>
+                <li><strong>الملفات</strong> - لعمليات الإدخال/الإخراج</li>
+                <li><strong>أجهزة I/O</strong> - للتواصل مع الطرفيات</li>
+            </ul>
+
+            <h3>أنشطة إدارة العمليات في نظام التشغيل</h3>
+            <p>نظام التشغيل مسؤول عن:</p>
+            <ul>
+                <li><strong>إنشاء وحذف</strong> العمليات (المستخدم والنظام)</li>
+                <li><strong>جدولة</strong> العمليات على المعالج</li>
+                <li><strong>تعليق واستئناف</strong> العمليات</li>
+                <li><strong>توفير آليات</strong> لمزامنة العمليات</li>
+                <li><strong>توفير آليات</strong> لتواصل العمليات</li>
+                <li><strong>معالجة الجمود</strong> بين العمليات</li>
+            </ul>
+
+            <div class="key-message">
+                <p><strong>أحادي الخيط مقابل متعدد الخيوط:</strong> العملية أحادية الخيط لها عداد برنامج واحد. العملية متعددة الخيوط لها عدادات برنامج متعددة، مما يسمح بتنفيذ مواقع متعددة في الكود في وقت واحد.</p>
+            </div>
+        </section>
+
+        <!-- Section 12: Memory Management -->
+        <section id="memory-management" class="content-section">
+            <h2>12. إدارة الذاكرة</h2>
+
+            <p>إدارة الذاكرة وظيفة حرجة لنظام التشغيل:</p>
+
+            <h3>لماذا إدارة الذاكرة؟</h3>
+            <ul>
+                <li>كل التعليمات والبيانات يجب أن تكون في الذاكرة للتنفيذ</li>
+                <li>عمليات متعددة تتنافس على ذاكرة محدودة</li>
+                <li>المعالج يمكنه فقط الوصول مباشرة للذاكرة الرئيسية والمسجلات</li>
+                <li>الاستخدام الفعال للذاكرة يحسن أداء النظام</li>
+            </ul>
+
+            <h3>أنشطة إدارة الذاكرة</h3>
+            <p>نظام التشغيل مسؤول عن:</p>
+
+            <article class="os-component">
+                <h4>تتبع استخدام الذاكرة</h4>
+                <ul>
+                    <li>متابعة أي أجزاء من الذاكرة قيد الاستخدام</li>
+                    <li>معرفة أي عمليات تملك أي مناطق ذاكرة</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>التخصيص وإلغاء التخصيص</h4>
+                <ul>
+                    <li>تحديد أي عمليات تحصل على ذاكرة وكم</li>
+                    <li>تخصيص الذاكرة عند حاجة العمليات لها</li>
+                    <li>تحرير الذاكرة عند انتهاء العمليات أو تحريرها</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>نقل البيانات</h4>
+                <ul>
+                    <li>نقل البيانات بين الذاكرة الرئيسية والقرص</li>
+                    <li>تنفيذ الذاكرة الافتراضية (استخدام القرص كذاكرة ممتدة)</li>
+                    <li>تبديل العمليات داخل وخارج الذاكرة</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>الذاكرة الافتراضية:</strong> تسمح للبرامج باستخدام ذاكرة أكثر مما هو متاح فعلياً باستخدام مساحة القرص كامتداد للـ RAM. هذا يمكّن تشغيل برامج كبيرة وعمليات أكثر في وقت واحد.</p>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary" class="content-section summary">
+            <h2>الملخص والنقاط الرئيسية</h2>
+
+            <h3>ما تعلمناه</h3>
+            <ol>
+                <li><strong>التخزين هرمي</strong> - من المسجلات السريعة المكلفة إلى محركات الأقراص البطيئة الرخيصة، مع التخزين المؤقت لتحسين الوصول</li>
+
+                <li><strong>DMA يمكّن I/O فعال</strong> - يسمح بنقل البيانات دون تدخل مستمر من المعالج، مما يحرر المعالج لعمل آخر</li>
+
+                <li><strong>عمليات نظام التشغيل مدفوعة بالمقاطعات</strong> - مقاطعات العتاد والبرمجيات تسمح بمعالجة الأحداث بكفاءة</li>
+
+                <li><strong>البرمجة المتعددة تعظم استغلال المعالج</strong> - بالاحتفاظ ببرامج متعددة في الذاكرة والتبديل عند انتظار I/O</li>
+
+                <li><strong>تعدد المهام يوفر التفاعلية</strong> - التبديل السريع للمعالج يعطي المستخدمين وهم التنفيذ المتزامن</li>
+
+                <li><strong>التشغيل ثنائي الوضع يوفر الحماية</strong> - وضع المستخدم يقيد الوصول، وضع النواة له صلاحيات كاملة</li>
+
+                <li><strong>انتقالات الوضع تحدث عبر استدعاءات النظام والمقاطعات</strong> - البرامج تطلب خدمات نظام التشغيل عبر واجهات محكومة</li>
+
+                <li><strong>إدارة العمليات تتعامل مع تنفيذ البرامج</strong> - إنشاء وجدولة وإدارة موارد العمليات</li>
+
+                <li><strong>إدارة الذاكرة ضرورية</strong> - تتبع وتخصيص وإدارة الذاكرة لجميع العمليات</li>
+            </ol>
+
+            <div class="key-message">
+                <p><strong>نظرة للأمام:</strong> في الأسبوع الثالث، سنتعمق أكثر في إدارة العمليات - استكشاف حالات العملية وكتلة التحكم في العملية (PCB) وخوارزميات الجدولة بالتفصيل.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <section id="image-credits">
+            <h2>الاعتمادات والإسنادات</h2>
+            <p class="credits-intro">جميع الرسوم البيانية في هذا المستند هي أعمال تعليمية أصلية تم إنشاؤها خصيصاً لهذا المقرر.</p>
+            <ul class="credits-list">
+                <li><strong>هرم التسلسل التخزيني:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مخطط DMA:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مخطط البرمجة المتعددة:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مخطط تخطيط الذاكرة:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مقارنة ثنائي الوضع:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>تدفق انتقال الوضع:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+            </ul>
+            <p class="credits-intro" style="margin-top: 1rem;">
+                <strong>الرخصة:</strong> جميع الرسوم البيانية مرخصة تحت رخصة المشاع الإبداعي - نسب المصنف 4.0 دولي (CC BY 4.0).
+            </p>
+        </section>
+    </footer>
+
+    <style>
+        /* === STORAGE PYRAMID === */
+        .storage-pyramid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pyramid-level {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            border: 2px solid var(--primary-color);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .pyramid-level:hover {
+            transform: scale(1.02);
+        }
+
+        .level-registers {
+            background: #e74c3c;
+            width: 40%;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .level-cache {
+            background: #f39c12;
+            width: 55%;
+        }
+
+        .level-ram {
+            background: #27ae60;
+            width: 70%;
+        }
+
+        .level-ssd {
+            background: #3498db;
+            width: 85%;
+        }
+
+        .level-hdd {
+            background: #2c3e50;
+            width: 100%;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .level-name {
+            font-size: 1em;
+        }
+
+        .level-info {
+            font-size: 0.75em;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .pyramid-level {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            .level-registers { width: 60%; }
+            .level-cache { width: 70%; }
+            .level-ram { width: 80%; }
+            .level-ssd { width: 90%; }
+            .level-hdd { width: 100%; }
+        }
+
+        /* === DMA DIAGRAM === */
+        .dma-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        .dma-components {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .dma-box {
+            padding: 1.5rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            color: white;
+            min-width: 120px;
+        }
+
+        .cpu-box { background: #e74c3c; }
+        .memory-box { background: #27ae60; }
+        .dma-controller-box { background: #9b59b6; }
+        .device-box { background: #3498db; }
+
+        .dma-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .flow-step {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            border-right: 4px solid var(--secondary-color);
+            font-size: 0.9em;
+        }
+
+        /* === MULTIPROGRAMMING DIAGRAM === */
+        .multiprogramming-diagram {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .multiprogramming-diagram {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mp-scenario {
+            text-align: center;
+        }
+
+        .mp-scenario h4 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .timeline-visual {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .time-block {
+            flex: 1;
+            padding: 0.75rem;
+            color: white;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .cpu-block { background: #27ae60; }
+        .cpu-block-alt { background: #3498db; }
+        .wait-block { background: #95a5a6; }
+
+        /* === MEMORY LAYOUT DIAGRAM === */
+        .memory-layout-diagram {
+            max-width: 400px;
+            margin: 0 auto;
+            border: 3px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .memory-section {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .memory-section:last-of-type {
+            border-bottom: none;
+        }
+
+        .os-section {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .process-section {
+            color: white;
+        }
+
+        .p1 { background: #3498db; }
+        .p2 { background: #27ae60; }
+        .p3 { background: #9b59b6; }
+        .p4 { background: #f39c12; }
+
+        .section-label {
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .section-detail {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .memory-address-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            background: var(--light-gray);
+            font-size: 0.8em;
+            color: #666;
+            font-family: monospace;
+        }
+
+        /* === DUAL MODE COMPARISON === */
+        .dual-mode-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: var(--spacing-lg) 0;
+        }
+
+        @media (max-width: 768px) {
+            .dual-mode-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mode-box {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 3px solid;
+        }
+
+        .user-mode-box {
+            background: #fff5f5;
+            border-color: #e74c3c;
+        }
+
+        .user-mode-box h4 {
+            color: #e74c3c;
+        }
+
+        .kernel-mode-box {
+            background: #f0fff4;
+            border-color: #27ae60;
+        }
+
+        .kernel-mode-box h4 {
+            color: #27ae60;
+        }
+
+        .mode-box h4 {
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+
+        .mode-box ul {
+            margin-bottom: 0;
+        }
+
+        /* === MODE TRANSITION DIAGRAM === */
+        .mode-transition-diagram {
+            padding: 2rem;
+        }
+
+        .transition-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .mode-state {
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .user-state {
+            background: #fff5f5;
+            border: 3px solid #e74c3c;
+        }
+
+        .kernel-state {
+            background: #f0fff4;
+            border: 3px solid #27ae60;
+        }
+
+        .state-label {
+            display: block;
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 0.25rem;
+        }
+
+        .state-desc {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .transition-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .arrow-icon {
+            font-size: 2em;
+            color: var(--secondary-color);
+        }
+
+        .arrow-label {
+            font-size: 0.8em;
+            color: #666;
+            text-align: center;
+            max-width: 120px;
+        }
+
+        .return-arrow {
+            order: -1;
+        }
+
+        @media (max-width: 768px) {
+            .transition-flow {
+                flex-direction: column;
+            }
+            .return-arrow {
+                order: 0;
+            }
+            .arrow-icon {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</body>
+</html>

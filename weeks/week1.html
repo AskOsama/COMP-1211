@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 1: Introduction to Operating Systems</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <a href="week1_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <header>
+        <h1>Introduction to Operating Systems</h1>
+        <p class="subtitle">Week 1: Fundamentals and Computer System Organization</p>
+    </header>
+
+    <nav class="table-of-contents no-print">
+        <h2>Contents</h2>
+        <ul>
+            <li><a href="#objectives">Learning Objectives</a></li>
+            <li><a href="#what-is-os">1. What is an Operating System?</a></li>
+            <li><a href="#system-structure">2. Computer System Structure</a></li>
+            <li><a href="#layered-view">3. Abstract Layered View</a></li>
+            <li><a href="#os-perspectives">4. What Operating Systems Do</a></li>
+            <li><a href="#os-definition">5. OS Definition</a></li>
+            <li><a href="#system-organization">6. Computer System Organization</a></li>
+            <li><a href="#interrupts">7. Interrupts & Interrupt Handling</a></li>
+            <li><a href="#io-structure">8. I/O Structure</a></li>
+            <li><a href="#bootstrap">9. Computer Startup</a></li>
+            <li><a href="#summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Learning Objectives -->
+        <section id="objectives" class="learning-objectives">
+            <h2>Learning Objectives</h2>
+            <p>By the end of this session, you will be able to:</p>
+            <ul>
+                <li>Define what an operating system is and explain its role</li>
+                <li>Identify the four components of a computer system</li>
+                <li>Describe the abstract layered view of a computer system</li>
+                <li>Explain three different perspectives on what operating systems do</li>
+                <li>Distinguish between kernel, system programs, and middleware</li>
+                <li>Understand computer system organization and the system bus</li>
+                <li>Explain how interrupts work and why they are important</li>
+                <li>Compare synchronous and asynchronous I/O operations</li>
+                <li>Describe the computer bootstrap process</li>
+            </ul>
+        </section>
+
+        <!-- Section 1: What is an Operating System? -->
+        <section id="what-is-os" class="content-section">
+            <h2>1. What is an Operating System?</h2>
+
+            <div class="definition">
+                <h3>Definition</h3>
+                <p>An <strong>Operating System (OS)</strong> is a program that acts as an <em>intermediary</em> between a user of a computer and the computer hardware.</p>
+            </div>
+
+            <h3>Three Main Goals</h3>
+            <p>Operating systems have three fundamental goals:</p>
+            <ol>
+                <li><strong>Execute user programs</strong> - Run applications and solve user problems</li>
+                <li><strong>Make the computer convenient</strong> - Provide an easy-to-use interface</li>
+                <li><strong>Use hardware efficiently</strong> - Manage resources effectively</li>
+            </ol>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">The OS as an Intermediary</h3>
+                </div>
+                <div class="diagram-code">
+                    <pre><code>    ┌─────────────┐
+    │    USER     │
+    └──────┬──────┘
+           │
+           ▼
+    ┌─────────────┐
+    │  OPERATING  │
+    │   SYSTEM    │
+    └──────┬──────┘
+           │
+           ▼
+    ┌─────────────┐
+    │  HARDWARE   │
+    └─────────────┘</code></pre>
+                </div>
+                <p class="diagram-note">The OS provides a bridge between users and complex hardware</p>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> Without an operating system, users would need to directly program hardware using machine code - an extremely difficult and error-prone task. The OS abstracts this complexity.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Computer System Structure -->
+        <section id="system-structure" class="content-section">
+            <h2>2. Computer System Structure</h2>
+
+            <p>A computer system can be divided roughly into four components:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Four Components of a Computer System</h3>
+                </div>
+                <div class="four-components-grid">
+                    <div class="component-layer layer-users">
+                        <h4>1. Users</h4>
+                        <p>People, machines, other computers</p>
+                    </div>
+                    <div class="component-layer layer-applications">
+                        <h4>2. Application Programs</h4>
+                        <p>Word processors, compilers, browsers, games</p>
+                    </div>
+                    <div class="component-layer layer-os">
+                        <h4>3. Operating System</h4>
+                        <p>Controls and coordinates hardware use</p>
+                    </div>
+                    <div class="component-layer layer-hardware">
+                        <h4>4. Hardware</h4>
+                        <p>CPU, memory, I/O devices</p>
+                    </div>
+                </div>
+            </div>
+
+            <article class="os-component">
+                <h4>Hardware</h4>
+                <p>Provides the basic computing resources:</p>
+                <ul>
+                    <li><strong>CPU (Central Processing Unit)</strong> - Executes instructions</li>
+                    <li><strong>Memory</strong> - Stores data and programs temporarily</li>
+                    <li><strong>I/O Devices</strong> - Keyboards, displays, disks, network interfaces</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Operating System</h4>
+                <p>Controls and coordinates use of hardware among various applications and users. It acts as a <em>resource allocator</em> and <em>control program</em>.</p>
+            </article>
+
+            <article class="os-component">
+                <h4>Application Programs</h4>
+                <p>Define the ways in which computing resources are used to solve user problems:</p>
+                <ul>
+                    <li>Word processors</li>
+                    <li>Compilers and development tools</li>
+                    <li>Web browsers</li>
+                    <li>Database systems</li>
+                    <li>Video games</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Users</h4>
+                <p>Can be people, other machines, or other computers that interact with the system.</p>
+            </article>
+        </section>
+
+        <!-- Section 3: Abstract Layered View -->
+        <section id="layered-view" class="content-section">
+            <h2>3. Abstract Layered View</h2>
+
+            <p>The operating system provides an <strong>abstraction layer</strong> that hides the complexity of hardware from applications and users.</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Layered View of Computer System</h3>
+                </div>
+                <div class="layered-view">
+                    <div class="layer-item" style="background: #9b59b6; border-radius: 8px 8px 0 0;">User</div>
+                    <div class="layer-item" style="background: #3498db;">Application Programs</div>
+                    <div class="layer-item" style="background: #e74c3c;">Operating System</div>
+                    <div class="layer-item" style="background: #2c3e50; border-radius: 0 0 8px 8px;">Hardware</div>
+                </div>
+                <p class="diagram-note">Each layer only interacts with the layer directly below it</p>
+            </div>
+
+            <h3>Benefits of Layering</h3>
+            <ul>
+                <li><strong>Abstraction</strong> - Higher layers don't need to know hardware details</li>
+                <li><strong>Modularity</strong> - Each layer can be modified independently</li>
+                <li><strong>Security</strong> - Lower layers can protect resources from upper layers</li>
+                <li><strong>Portability</strong> - Applications can run on different hardware</li>
+            </ul>
+
+            <div class="example">
+                <h4>Example: Writing to a File</h4>
+                <p>When a user saves a document:</p>
+                <ol>
+                    <li><strong>User</strong> clicks "Save" button</li>
+                    <li><strong>Application</strong> calls file write function</li>
+                    <li><strong>OS</strong> translates to disk operations</li>
+                    <li><strong>Hardware</strong> physically writes data to disk</li>
+                </ol>
+                <p>The user doesn't need to know which disk sector to use!</p>
+            </div>
+        </section>
+
+        <!-- Section 4: What Operating Systems Do -->
+        <section id="os-perspectives" class="content-section">
+            <h2>4. What Operating Systems Do</h2>
+
+            <p>The role of an operating system varies depending on the point of view:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Three Perspectives on Operating Systems</h3>
+                </div>
+                <div class="three-perspectives-grid">
+                    <div class="perspective-card perspective-pc">
+                        <h4>Personal Computer View</h4>
+                        <p><strong>Focus:</strong> Ease of use and user experience</p>
+                        <p>Users want their applications to work smoothly. Resource utilization is less important since the computer serves one user.</p>
+                    </div>
+                    <div class="perspective-card perspective-shared">
+                        <h4>Shared/Mainframe View</h4>
+                        <p><strong>Focus:</strong> Resource utilization and fairness</p>
+                        <p>Multiple users share resources. The OS must allocate CPU, memory, and I/O fairly and efficiently.</p>
+                    </div>
+                    <div class="perspective-card perspective-mobile">
+                        <h4>Mobile/Embedded View</h4>
+                        <p><strong>Focus:</strong> Battery life and responsiveness</p>
+                        <p>Resources are limited. The OS must optimize for power efficiency while maintaining good user experience.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>No Universal Definition:</strong> Operating systems exist because they offer a reasonable way to solve the problem of creating a usable computing system. The design varies based on the target environment.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: OS Definition -->
+        <section id="os-definition" class="content-section">
+            <h2>5. OS Definition: Kernel, System Programs, Middleware</h2>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Components of an Operating System</h3>
+                </div>
+                <div class="os-circles-container">
+                    <div class="os-circles">
+                        <div class="circle circle-outer">
+                            <span class="circle-label label-middleware">Middleware & Applications</span>
+                        </div>
+                        <div class="circle circle-middle">
+                            <span class="circle-label label-system">System Programs</span>
+                        </div>
+                        <div class="circle circle-inner">
+                            <span class="circle-label label-kernel">Kernel</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">The kernel is always running; system programs and middleware are loaded as needed</p>
+            </div>
+
+            <article class="os-component">
+                <h4>Kernel (Core)</h4>
+                <p>The <strong>kernel</strong> is the one program running at all times on the computer. It is the heart of the operating system.</p>
+                <ul>
+                    <li>Always loaded in memory</li>
+                    <li>Has complete control over the hardware</li>
+                    <li>Manages processes, memory, and devices</li>
+                    <li>Handles system calls from applications</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>System Programs</h4>
+                <p>Programs that are associated with the operating system but are not part of the kernel:</p>
+                <ul>
+                    <li>File management utilities</li>
+                    <li>Status information tools</li>
+                    <li>Programming language support</li>
+                    <li>Program loading and execution</li>
+                    <li>Communications programs</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Middleware</h4>
+                <p>Software frameworks that provide additional services to application developers:</p>
+                <ul>
+                    <li>Databases</li>
+                    <li>Multimedia services</li>
+                    <li>Graphics frameworks</li>
+                </ul>
+            </article>
+        </section>
+
+        <!-- Section 6: Computer System Organization -->
+        <section id="system-organization" class="content-section">
+            <h2>6. Computer System Organization</h2>
+
+            <p>Modern computers use a <strong>common bus</strong> architecture to connect all components:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">System Bus Architecture</h3>
+                </div>
+                <div class="bus-diagram">
+                    <div class="bus-components">
+                        <div class="bus-component cpu">CPU</div>
+                        <div class="bus-component memory">Memory</div>
+                        <div class="bus-component controller">Disk Controller</div>
+                        <div class="bus-component controller">USB Controller</div>
+                        <div class="bus-component controller">Graphics Adapter</div>
+                    </div>
+                    <div class="bus-line"></div>
+                    <div class="devices-row">
+                        <div class="device">Hard Disk</div>
+                        <div class="device">Keyboard/Mouse</div>
+                        <div class="device">Monitor</div>
+                    </div>
+                </div>
+                <p class="diagram-note">All components communicate through the shared system bus</p>
+            </div>
+
+            <h3>Key Concepts</h3>
+
+            <article class="os-component">
+                <h4>Device Controllers</h4>
+                <p>Each device has a <strong>controller</strong> that manages that specific device type:</p>
+                <ul>
+                    <li>Contains a local buffer and registers</li>
+                    <li>Handles device-specific operations</li>
+                    <li>Communicates with CPU through interrupts</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Device Drivers</h4>
+                <p>Software that provides a uniform interface to access various hardware devices:</p>
+                <ul>
+                    <li>Translates OS requests to controller commands</li>
+                    <li>Each controller type needs its own driver</li>
+                    <li>Loaded as part of the kernel or as modules</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Concurrent Operation</h4>
+                <p>The CPU and device controllers can execute <em>concurrently</em>:</p>
+                <ul>
+                    <li>While CPU runs a program, disk can read data</li>
+                    <li>Controllers compete for memory access</li>
+                    <li>Memory controller synchronizes access</li>
+                </ul>
+            </article>
+        </section>
+
+        <!-- Section 7: Interrupts -->
+        <section id="interrupts" class="content-section">
+            <h2>7. Interrupts and Interrupt Handling</h2>
+
+            <div class="definition">
+                <h3>What is an Interrupt?</h3>
+                <p>An <strong>interrupt</strong> is a signal to the CPU that an event has occurred that needs immediate attention. It temporarily halts the current program execution.</p>
+            </div>
+
+            <h3>Interrupt Timeline</h3>
+            <div class="diagram-container">
+                <div class="interrupt-timeline">
+                    <div class="timeline-row">
+                        <span class="timeline-label">CPU</span>
+                        <div class="timeline-bar">
+                            <div class="timeline-segment segment-running" style="left: 0; width: 30%;">Program</div>
+                            <div class="timeline-segment segment-isr" style="left: 30%; width: 25%;">ISR</div>
+                            <div class="timeline-segment segment-running" style="left: 55%; width: 45%;">Program</div>
+                        </div>
+                    </div>
+                    <div class="timeline-row">
+                        <span class="timeline-label">I/O</span>
+                        <div class="timeline-bar">
+                            <div class="timeline-segment segment-waiting" style="left: 0; width: 10%;"></div>
+                            <div class="timeline-segment segment-interrupt" style="left: 10%; width: 20%;">Transfer</div>
+                            <div class="timeline-segment segment-waiting" style="left: 30%; width: 70%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">When I/O completes, it interrupts the CPU to process the data</p>
+            </div>
+
+            <a href="../demos/interrupt_timeline_demo.html" class="demo-link">Launch Interactive Interrupt Timeline Demo</a>
+
+            <h3>How Interrupts Work</h3>
+            <ol>
+                <li><strong>Interrupt occurs</strong> - Device signals completion or error</li>
+                <li><strong>CPU saves state</strong> - Current program counter and registers are saved</li>
+                <li><strong>Jump to ISR</strong> - CPU looks up address in <em>interrupt vector</em></li>
+                <li><strong>Execute ISR</strong> - Interrupt Service Routine handles the event</li>
+                <li><strong>Restore state</strong> - CPU restores saved state and continues</li>
+            </ol>
+
+            <h3>Types of Interrupts</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Source</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Hardware Interrupt</strong></td>
+                        <td>External device</td>
+                        <td>Keyboard press, disk completion</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Software Interrupt (Trap)</strong></td>
+                        <td>Program execution</td>
+                        <td>System call, division by zero</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="key-message">
+                <p><strong>Why Interrupts Matter:</strong> Without interrupts, the CPU would have to constantly check (poll) each device. Interrupts allow efficient, event-driven handling of I/O.</p>
+            </div>
+        </section>
+
+        <!-- Section 8: I/O Structure -->
+        <section id="io-structure" class="content-section">
+            <h2>8. I/O Structure: Synchronous vs Asynchronous</h2>
+
+            <p>There are two main approaches to handling I/O operations:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Synchronous vs Asynchronous I/O</h3>
+                </div>
+                <div class="io-comparison">
+                    <div class="io-type io-sync">
+                        <h4>Synchronous I/O</h4>
+                        <ol class="io-steps">
+                            <li>Program requests I/O</li>
+                            <li>Program WAITS (blocked)</li>
+                            <li>I/O operation completes</li>
+                            <li>Program continues</li>
+                        </ol>
+                        <p><strong>Pros:</strong> Simple to program</p>
+                        <p><strong>Cons:</strong> CPU sits idle during I/O</p>
+                    </div>
+                    <div class="io-type io-async">
+                        <h4>Asynchronous I/O</h4>
+                        <ol class="io-steps">
+                            <li>Program requests I/O</li>
+                            <li>Program CONTINUES working</li>
+                            <li>I/O completes (interrupt)</li>
+                            <li>Program handles result</li>
+                        </ol>
+                        <p><strong>Pros:</strong> CPU stays productive</p>
+                        <p><strong>Cons:</strong> More complex programming</p>
+                    </div>
+                </div>
+            </div>
+
+            <a href="../demos/io_comparison_demo.html" class="demo-link">Launch Interactive I/O Comparison Demo</a>
+
+            <div class="example">
+                <h4>Real-World Analogy</h4>
+                <p><strong>Synchronous:</strong> You call a restaurant and wait on hold until your order is ready. You can't do anything else.</p>
+                <p><strong>Asynchronous:</strong> You order food via an app and continue with your day. The app notifies you when food arrives.</p>
+            </div>
+
+            <h3>Device-Status Table</h3>
+            <p>The OS maintains a <strong>device-status table</strong> that tracks:</p>
+            <ul>
+                <li>Type of each device</li>
+                <li>Current state (idle, busy)</li>
+                <li>Pending I/O requests</li>
+                <li>Request queue for each device</li>
+            </ul>
+        </section>
+
+        <!-- Section 9: Computer Startup -->
+        <section id="bootstrap" class="content-section">
+            <h2>9. Computer Startup (Bootstrap Process)</h2>
+
+            <div class="definition">
+                <h3>What is Bootstrap?</h3>
+                <p><strong>Bootstrap</strong> (or "booting") is the process of loading the operating system when the computer is powered on or restarted.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Boot Sequence</h3>
+                </div>
+                <div class="boot-sequence">
+                    <div class="boot-step">
+                        <span class="boot-icon">1.</span>
+                        <span class="boot-text">Power ON - CPU starts at reset vector</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">2.</span>
+                        <span class="boot-text">BIOS/UEFI loads from ROM/firmware</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">3.</span>
+                        <span class="boot-text">POST (Power-On Self Test) runs</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">4.</span>
+                        <span class="boot-text">Boot device identified (disk, USB, network)</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">5.</span>
+                        <span class="boot-text">Boot loader loaded from boot sector</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">6.</span>
+                        <span class="boot-text">Boot loader loads OS kernel into memory</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">7.</span>
+                        <span class="boot-text">Kernel initializes hardware and drivers</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">8.</span>
+                        <span class="boot-text">System services and user interface start</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                </div>
+            </div>
+
+            <a href="../demos/boot_sequence_demo.html" class="demo-link">Launch Interactive Boot Sequence Demo</a>
+
+            <h3>Key Components</h3>
+
+            <article class="os-component">
+                <h4>Bootstrap Loader</h4>
+                <p>A small program stored in ROM or firmware that:</p>
+                <ul>
+                    <li>Initializes CPU registers and memory</li>
+                    <li>Performs hardware diagnostics</li>
+                    <li>Locates and loads the OS kernel</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>BIOS vs UEFI</h4>
+                <ul>
+                    <li><strong>BIOS</strong> (Basic Input/Output System) - Traditional firmware, limited to 16-bit mode</li>
+                    <li><strong>UEFI</strong> (Unified Extensible Firmware Interface) - Modern replacement, supports 64-bit, faster boot</li>
+                </ul>
+            </article>
+
+            <div class="limitations-box">
+                <h4>What if Bootstrap Fails?</h4>
+                <p>If the bootstrap process cannot find a valid operating system:</p>
+                <ul>
+                    <li>Error message displayed (e.g., "Operating system not found")</li>
+                    <li>System halts or enters recovery mode</li>
+                    <li>User must fix boot configuration or reinstall OS</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary" class="content-section summary">
+            <h2>Summary and Key Takeaways</h2>
+
+            <h3>What We've Learned</h3>
+            <ol>
+                <li><strong>Operating Systems are intermediaries</strong> between users and hardware, providing convenience and efficiency</li>
+
+                <li><strong>Computer systems have four components:</strong> Hardware, OS, Application Programs, and Users</li>
+
+                <li><strong>The layered view</strong> shows how abstraction hides complexity from higher levels</li>
+
+                <li><strong>OS perspective varies:</strong> Personal (convenience), Shared (resource allocation), Mobile (efficiency)</li>
+
+                <li><strong>The kernel is the core</strong> - always running, surrounded by system programs and middleware</li>
+
+                <li><strong>Modern computers use bus architecture</strong> where CPU, memory, and controllers communicate via shared bus</li>
+
+                <li><strong>Interrupts enable efficient I/O</strong> by signaling events instead of continuous polling</li>
+
+                <li><strong>Synchronous I/O blocks</strong> while asynchronous I/O allows concurrent processing</li>
+
+                <li><strong>Bootstrap loads the OS</strong> through a sequence from BIOS/UEFI to kernel initialization</li>
+            </ol>
+
+            <div class="key-message">
+                <p><strong>Looking Ahead:</strong> In Week 2, we'll explore process management - how the OS handles multiple running programs, schedules CPU time, and manages process states.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <section id="image-credits">
+            <h2>Credits and Attributions</h2>
+            <p class="credits-intro">All diagrams in this document are original educational works created specifically for this course.</p>
+            <ul class="credits-list">
+                <li><strong>Computer System Structure Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Layered View Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>OS Components Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Bus Architecture Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Interrupt Timeline:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>I/O Comparison Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Boot Sequence Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+            </ul>
+            <p class="credits-intro" style="margin-top: 1rem;">
+                <strong>License:</strong> All diagrams are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+            </p>
+        </section>
+    </footer>
+</body>
+</html>

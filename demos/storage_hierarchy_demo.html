@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Hierarchy Demo | Operating Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --registers-color: #e74c3c;
+            --cache-color: #f39c12;
+            --ram-color: #27ae60;
+            --ssd-color: #3498db;
+            --hdd-color: #2c3e50;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: white;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1em;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Main content layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Pyramid Section */
+        .pyramid-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .pyramid-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #3498db;
+        }
+
+        .pyramid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .pyramid-level {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            text-align: center;
+        }
+
+        .pyramid-level:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .pyramid-level.selected {
+            transform: scale(1.08);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .level-registers {
+            background: var(--registers-color);
+            width: 35%;
+        }
+
+        .level-cache {
+            background: var(--cache-color);
+            width: 50%;
+        }
+
+        .level-ram {
+            background: var(--ram-color);
+            width: 65%;
+        }
+
+        .level-ssd {
+            background: var(--ssd-color);
+            width: 80%;
+        }
+
+        .level-hdd {
+            background: var(--hdd-color);
+            width: 95%;
+        }
+
+        .level-name {
+            font-size: 1em;
+        }
+
+        /* Info Panel */
+        .info-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .info-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #3498db;
+        }
+
+        .info-card {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .info-card.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .info-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+        }
+
+        .info-card.registers h3 { border-color: var(--registers-color); color: var(--registers-color); }
+        .info-card.cache h3 { border-color: var(--cache-color); color: var(--cache-color); }
+        .info-card.ram h3 { border-color: var(--ram-color); color: var(--ram-color); }
+        .info-card.ssd h3 { border-color: var(--ssd-color); color: var(--ssd-color); }
+        .info-card.hdd h3 { border-color: var(--hdd-color); color: var(--hdd-color); }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .info-description {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .placeholder-info {
+            text-align: center;
+            color: #888;
+            padding: 3rem 1rem;
+        }
+
+        .placeholder-info p {
+            font-size: 1.1em;
+        }
+
+        /* Data Flow Animation */
+        .flow-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .flow-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #3498db;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .flow-box {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            min-width: 100px;
+            position: relative;
+        }
+
+        .flow-box.registers { background: var(--registers-color); }
+        .flow-box.cache { background: var(--cache-color); }
+        .flow-box.ram { background: var(--ram-color); }
+        .flow-box.ssd { background: var(--ssd-color); }
+        .flow-box.hdd { background: var(--hdd-color); }
+
+        .flow-arrow {
+            font-size: 1.5em;
+            color: #3498db;
+        }
+
+        .data-packet {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .flow-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #219a52;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #34495e;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #2c3e50;
+        }
+
+        /* Comparison Table */
+        .comparison-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        .comparison-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #3498db;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .speed-bar, .cost-bar, .capacity-bar {
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        /* Explanation */
+        .explanation {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-top: 2rem;
+        }
+
+        .explanation h4 {
+            margin-bottom: 0.5rem;
+            color: #3498db;
+        }
+
+        .explanation p {
+            color: #ddd;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            .pyramid-level {
+                padding: 0.75rem 1rem;
+                font-size: 0.85em;
+            }
+
+            .level-registers { width: 50%; }
+            .level-cache { width: 60%; }
+            .level-ram { width: 75%; }
+            .level-ssd { width: 88%; }
+            .level-hdd { width: 100%; }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-diagram {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../weeks/week2.html#storage-hierarchy" class="back-link">&larr; Back to Week 2</a>
+
+        <header>
+            <h1>Storage Hierarchy Visualization</h1>
+            <p class="subtitle">Click on each level to learn about its characteristics</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Pyramid Section -->
+            <div class="pyramid-section">
+                <h2>Storage Pyramid</h2>
+                <div class="pyramid-container">
+                    <div class="pyramid-level level-registers" data-level="registers" onclick="selectLevel('registers')">
+                        <span class="level-name">Registers</span>
+                    </div>
+                    <div class="pyramid-level level-cache" data-level="cache" onclick="selectLevel('cache')">
+                        <span class="level-name">Cache (L1, L2, L3)</span>
+                    </div>
+                    <div class="pyramid-level level-ram" data-level="ram" onclick="selectLevel('ram')">
+                        <span class="level-name">Main Memory (RAM)</span>
+                    </div>
+                    <div class="pyramid-level level-ssd" data-level="ssd" onclick="selectLevel('ssd')">
+                        <span class="level-name">Solid State Drive (SSD)</span>
+                    </div>
+                    <div class="pyramid-level level-hdd" data-level="hdd" onclick="selectLevel('hdd')">
+                        <span class="level-name">Hard Disk Drive (HDD)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="info-section">
+                <h2>Level Details</h2>
+
+                <div class="placeholder-info" id="placeholder">
+                    <p>👆 Click on a storage level to see details</p>
+                </div>
+
+                <!-- Registers Info -->
+                <div class="info-card registers" id="info-registers">
+                    <h3>CPU Registers</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Access Speed</div>
+                            <div class="info-value">&lt;1 ns</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Typical Size</div>
+                            <div class="info-value">~1 KB</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Cost per GB</div>
+                            <div class="info-value">Extremely High</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Volatility</div>
+                            <div class="info-value">Volatile</div>
+                        </div>
+                    </div>
+                    <p class="info-description">
+                        <strong>Registers</strong> are the fastest storage in a computer, located directly inside the CPU.
+                        They hold data that the CPU is actively working on. A modern CPU might have 16-32 general-purpose
+                        registers plus many special-purpose registers.
+                    </p>
+                </div>
+
+                <!-- Cache Info -->
+                <div class="info-card cache" id="info-cache">
+                    <h3>CPU Cache</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Access Speed</div>
+                            <div class="info-value">1-10 ns</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Typical Size</div>
+                            <div class="info-value">4-64 MB</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Cost per GB</div>
+                            <div class="info-value">Very High</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Volatility</div>
+                            <div class="info-value">Volatile</div>
+                        </div>
+                    </div>
+                    <p class="info-description">
+                        <strong>Cache memory</strong> sits between the CPU and main memory. It stores frequently accessed data
+                        to reduce average access time. Modern CPUs have multiple cache levels: L1 (fastest, smallest),
+                        L2, and L3 (slowest, largest).
+                    </p>
+                </div>
+
+                <!-- RAM Info -->
+                <div class="info-card ram" id="info-ram">
+                    <h3>Main Memory (RAM)</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Access Speed</div>
+                            <div class="info-value">50-100 ns</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Typical Size</div>
+                            <div class="info-value">8-64 GB</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Cost per GB</div>
+                            <div class="info-value">~$3-5</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Volatility</div>
+                            <div class="info-value">Volatile</div>
+                        </div>
+                    </div>
+                    <p class="info-description">
+                        <strong>Random Access Memory</strong> is where the OS and running programs live. It's the main
+                        working memory of the computer. Data in RAM is lost when power is turned off.
+                        Programs must be loaded from disk to RAM before execution.
+                    </p>
+                </div>
+
+                <!-- SSD Info -->
+                <div class="info-card ssd" id="info-ssd">
+                    <h3>Solid State Drive</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Access Speed</div>
+                            <div class="info-value">25-100 μs</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Typical Size</div>
+                            <div class="info-value">256 GB - 4 TB</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Cost per GB</div>
+                            <div class="info-value">~$0.08-0.15</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Volatility</div>
+                            <div class="info-value">Non-volatile</div>
+                        </div>
+                    </div>
+                    <p class="info-description">
+                        <strong>Solid State Drives</strong> use flash memory with no moving parts. They're much faster
+                        than traditional hard drives, have lower latency, and are more resistant to physical shock.
+                        Data persists without power.
+                    </p>
+                </div>
+
+                <!-- HDD Info -->
+                <div class="info-card hdd" id="info-hdd">
+                    <h3>Hard Disk Drive</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Access Speed</div>
+                            <div class="info-value">5-10 ms</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Typical Size</div>
+                            <div class="info-value">1-20 TB</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Cost per GB</div>
+                            <div class="info-value">~$0.02-0.03</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Volatility</div>
+                            <div class="info-value">Non-volatile</div>
+                        </div>
+                    </div>
+                    <p class="info-description">
+                        <strong>Hard Disk Drives</strong> use spinning magnetic platters with read/write heads.
+                        They offer the lowest cost per gigabyte and highest capacities, but are slower than SSDs.
+                        Great for archival storage and bulk data.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Flow Section -->
+        <div class="flow-section">
+            <h2>Data Flow Animation</h2>
+            <p style="text-align: center; color: #aaa; margin-bottom: 1rem;">
+                See how data moves through the storage hierarchy
+            </p>
+
+            <div class="flow-diagram" id="flowDiagram">
+                <div class="flow-box registers" id="flow-registers">Registers</div>
+                <span class="flow-arrow">⟷</span>
+                <div class="flow-box cache" id="flow-cache">Cache</div>
+                <span class="flow-arrow">⟷</span>
+                <div class="flow-box ram" id="flow-ram">RAM</div>
+                <span class="flow-arrow">⟷</span>
+                <div class="flow-box ssd" id="flow-ssd">SSD</div>
+                <span class="flow-arrow">⟷</span>
+                <div class="flow-box hdd" id="flow-hdd">HDD</div>
+            </div>
+
+            <div class="flow-controls">
+                <button class="btn btn-primary" onclick="animateDataFlow('read')">
+                    Simulate Read (HDD → Registers)
+                </button>
+                <button class="btn btn-secondary" onclick="animateDataFlow('write')">
+                    Simulate Write (Registers → HDD)
+                </button>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-section">
+            <h2>Quick Comparison</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Storage Type</th>
+                        <th>Speed</th>
+                        <th>Capacity</th>
+                        <th>Cost/GB</th>
+                        <th>Volatile?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color: var(--registers-color); font-weight: 600;">Registers</td>
+                        <td>⚡⚡⚡⚡⚡</td>
+                        <td>▪</td>
+                        <td>💰💰💰💰💰</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--cache-color); font-weight: 600;">Cache</td>
+                        <td>⚡⚡⚡⚡</td>
+                        <td>▪▪</td>
+                        <td>💰💰💰💰</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--ram-color); font-weight: 600;">RAM</td>
+                        <td>⚡⚡⚡</td>
+                        <td>▪▪▪</td>
+                        <td>💰💰💰</td>
+                        <td>Yes</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--ssd-color); font-weight: 600;">SSD</td>
+                        <td>⚡⚡</td>
+                        <td>▪▪▪▪</td>
+                        <td>💰💰</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td style="color: var(--hdd-color); font-weight: 600;">HDD</td>
+                        <td>⚡</td>
+                        <td>▪▪▪▪▪</td>
+                        <td>💰</td>
+                        <td>No</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Explanation -->
+        <div class="explanation">
+            <h4>Understanding the Storage Hierarchy</h4>
+            <p>
+                The storage hierarchy is designed to balance the trade-offs between speed, cost, and capacity.
+                <strong>Caching</strong> is used at every level to keep frequently accessed data in faster storage.
+                When the CPU needs data, it first checks the registers, then cache, then RAM. If the data isn't found
+                (a "cache miss"), it must be fetched from slower storage. This hierarchy allows computers to achieve
+                near-register speeds for frequently used data while having vast storage capacity available.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let selectedLevel = null;
+
+        function selectLevel(level) {
+            // Remove previous selection
+            document.querySelectorAll('.pyramid-level').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelectorAll('.info-card').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Select new level
+            const pyramidEl = document.querySelector(`[data-level="${level}"]`);
+            const infoEl = document.getElementById(`info-${level}`);
+            const placeholder = document.getElementById('placeholder');
+
+            pyramidEl.classList.add('selected');
+            infoEl.classList.add('active');
+            placeholder.style.display = 'none';
+
+            selectedLevel = level;
+        }
+
+        function animateDataFlow(direction) {
+            const levels = ['hdd', 'ssd', 'ram', 'cache', 'registers'];
+            if (direction === 'read') {
+                // HDD to Registers
+                animateThroughLevels(levels, 0);
+            } else {
+                // Registers to HDD
+                animateThroughLevels(levels.reverse(), 0);
+            }
+        }
+
+        function animateThroughLevels(levels, index) {
+            if (index >= levels.length) return;
+
+            const flowBox = document.getElementById(`flow-${levels[index]}`);
+            flowBox.style.transform = 'scale(1.2)';
+            flowBox.style.boxShadow = '0 0 30px rgba(255, 255, 255, 0.5)';
+
+            setTimeout(() => {
+                flowBox.style.transform = 'scale(1)';
+                flowBox.style.boxShadow = 'none';
+                animateThroughLevels(levels, index + 1);
+            }, 400);
+        }
+
+        // Auto-select registers on load
+        setTimeout(() => selectLevel('registers'), 500);
+    </script>
+</body>
+</html>

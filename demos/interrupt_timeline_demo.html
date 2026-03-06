@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interrupt Timeline Demo | Operating Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-green: #27ae60;
+            --warning-orange: #f39c12;
+            --light-gray: #f8f9fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        h1 {
+            font-size: 2em;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Timeline Container */
+        .timeline-container {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .time-scale {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 120px;
+            margin-bottom: 0.5rem;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        /* Timeline Rows */
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            height: 50px;
+        }
+
+        .row-label {
+            width: 100px;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-align: right;
+            padding-right: 1rem;
+        }
+
+        .timeline-track {
+            flex: 1;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-segment {
+            position: absolute;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .segment-running {
+            background: var(--success-green);
+        }
+
+        .segment-isr {
+            background: var(--warning-orange);
+        }
+
+        .segment-io {
+            background: var(--secondary-color);
+        }
+
+        .segment-interrupt {
+            background: var(--accent-color);
+        }
+
+        .segment-idle {
+            background: #95a5a6;
+        }
+
+        .segment-waiting {
+            background: #bdc3c7;
+        }
+
+        /* Current Time Indicator */
+        .time-indicator {
+            position: absolute;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--accent-color);
+            z-index: 10;
+            transition: left 0.1s linear;
+        }
+
+        .time-indicator::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -6px;
+            width: 0;
+            height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 10px solid var(--accent-color);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--primary-color);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Speed Control */
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 2rem;
+        }
+
+        .speed-control input {
+            width: 100px;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: white;
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-panel h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .event-log {
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+            background: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .event-log p {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .event-log p:last-child {
+            border-bottom: none;
+        }
+
+        .event-time {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        /* Explanation */
+        .explanation {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-top: 1rem;
+        }
+
+        .explanation h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        /* State Display */
+        .state-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .state-card {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .state-card h4 {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .state-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .state-value.active {
+            color: var(--success-green);
+        }
+
+        .state-value.interrupt {
+            color: var(--accent-color);
+            animation: pulse 0.5s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+            }
+
+            .speed-control {
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+
+            .row-label {
+                width: 70px;
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../weeks/week1.html#interrupts" class="back-link">&larr; Back to Week 1</a>
+
+        <header>
+            <h1>Interrupt Timeline Visualization</h1>
+            <p class="subtitle">Watch how the CPU handles interrupts in real-time</p>
+        </header>
+
+        <!-- State Display -->
+        <div class="state-display">
+            <div class="state-card">
+                <h4>CPU State</h4>
+                <div class="state-value" id="cpu-state">Running Program</div>
+            </div>
+            <div class="state-card">
+                <h4>I/O Device</h4>
+                <div class="state-value" id="io-state">Idle</div>
+            </div>
+            <div class="state-card">
+                <h4>Current Time</h4>
+                <div class="state-value" id="current-time">0 ms</div>
+            </div>
+            <div class="state-card">
+                <h4>Interrupts Handled</h4>
+                <div class="state-value" id="interrupt-count">0</div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #27ae60;"></div>
+                <span>Program Running</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                <span>ISR (Interrupt Handler)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3498db;"></div>
+                <span>I/O Transfer</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                <span>Interrupt Signal</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #95a5a6;"></div>
+                <span>Idle/Waiting</span>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-container">
+            <div class="timeline-header">
+                <h3>Execution Timeline</h3>
+            </div>
+
+            <div class="time-scale">
+                <span>0ms</span>
+                <span>200ms</span>
+                <span>400ms</span>
+                <span>600ms</span>
+                <span>800ms</span>
+                <span>1000ms</span>
+            </div>
+
+            <div class="timeline-row">
+                <div class="row-label">CPU</div>
+                <div class="timeline-track" id="cpu-track">
+                    <div class="time-indicator" id="time-indicator"></div>
+                </div>
+            </div>
+
+            <div class="timeline-row">
+                <div class="row-label">I/O Device</div>
+                <div class="timeline-track" id="io-track"></div>
+            </div>
+
+            <div class="timeline-row">
+                <div class="row-label">Interrupts</div>
+                <div class="timeline-track" id="interrupt-track"></div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="startSimulation()">
+                Start Simulation
+            </button>
+            <button class="btn btn-secondary" id="pauseBtn" onclick="pauseSimulation()" disabled>
+                Pause
+            </button>
+            <button class="btn btn-secondary" id="resetBtn" onclick="resetSimulation()">
+                Reset
+            </button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="1" max="5" value="2">
+                <span id="speedValue">2x</span>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <h3>Event Log</h3>
+            <div class="event-log" id="eventLog">
+                <p><span class="event-time">[0ms]</span> System ready. Click "Start Simulation" to begin.</p>
+            </div>
+        </div>
+
+        <!-- Explanation -->
+        <div class="explanation">
+            <h4>How Interrupts Work</h4>
+            <p>
+                <strong>1. Normal Execution:</strong> The CPU runs the user program (green).<br>
+                <strong>2. I/O Request:</strong> Program requests data from I/O device.<br>
+                <strong>3. I/O Transfer:</strong> Device performs the transfer independently (blue).<br>
+                <strong>4. Interrupt Signal:</strong> When done, device sends interrupt (red flash).<br>
+                <strong>5. ISR Execution:</strong> CPU pauses program, runs interrupt handler (orange).<br>
+                <strong>6. Resume:</strong> After ISR completes, CPU resumes the original program.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Simulation state
+        let isRunning = false;
+        let isPaused = false;
+        let currentTime = 0;
+        let animationFrame = null;
+        let interruptCount = 0;
+        let speed = 2;
+
+        // Timeline events (time in ms, scaled to 1000ms total)
+        const events = [
+            // First interrupt cycle
+            { time: 0, type: 'cpu', state: 'running', duration: 150 },
+            { time: 50, type: 'io', state: 'transfer', duration: 100 },
+            { time: 150, type: 'interrupt', state: 'signal', duration: 20 },
+            { time: 150, type: 'cpu', state: 'isr', duration: 80 },
+            { time: 230, type: 'cpu', state: 'running', duration: 170 },
+            // Second interrupt cycle
+            { time: 300, type: 'io', state: 'transfer', duration: 100 },
+            { time: 400, type: 'interrupt', state: 'signal', duration: 20 },
+            { time: 400, type: 'cpu', state: 'isr', duration: 80 },
+            { time: 480, type: 'cpu', state: 'running', duration: 220 },
+            // Third interrupt cycle
+            { time: 550, type: 'io', state: 'transfer', duration: 100 },
+            { time: 650, type: 'interrupt', state: 'signal', duration: 20 },
+            { time: 650, type: 'cpu', state: 'isr', duration: 80 },
+            { time: 730, type: 'cpu', state: 'running', duration: 270 }
+        ];
+
+        // DOM elements
+        const cpuTrack = document.getElementById('cpu-track');
+        const ioTrack = document.getElementById('io-track');
+        const interruptTrack = document.getElementById('interrupt-track');
+        const timeIndicator = document.getElementById('time-indicator');
+        const eventLog = document.getElementById('eventLog');
+        const cpuState = document.getElementById('cpu-state');
+        const ioState = document.getElementById('io-state');
+        const currentTimeDisplay = document.getElementById('current-time');
+        const interruptCountDisplay = document.getElementById('interrupt-count');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const speedSlider = document.getElementById('speed');
+        const speedValue = document.getElementById('speedValue');
+
+        // Speed control
+        speedSlider.addEventListener('input', function() {
+            speed = parseInt(this.value);
+            speedValue.textContent = speed + 'x';
+        });
+
+        function createSegment(track, event) {
+            const segment = document.createElement('div');
+            segment.className = 'timeline-segment';
+            segment.style.left = (event.time / 10) + '%';
+            segment.style.width = (event.duration / 10) + '%';
+
+            if (event.type === 'cpu') {
+                if (event.state === 'running') {
+                    segment.classList.add('segment-running');
+                    segment.textContent = 'Program';
+                } else if (event.state === 'isr') {
+                    segment.classList.add('segment-isr');
+                    segment.textContent = 'ISR';
+                }
+            } else if (event.type === 'io') {
+                segment.classList.add('segment-io');
+                segment.textContent = 'Transfer';
+            } else if (event.type === 'interrupt') {
+                segment.classList.add('segment-interrupt');
+                segment.textContent = '!';
+            }
+
+            track.appendChild(segment);
+        }
+
+        function logEvent(time, message) {
+            const p = document.createElement('p');
+            p.innerHTML = `<span class="event-time">[${time}ms]</span> ${message}`;
+            eventLog.appendChild(p);
+            eventLog.scrollTop = eventLog.scrollHeight;
+        }
+
+        function updateState(time) {
+            // Update CPU state
+            let cpuCurrentState = 'Idle';
+            let ioCurrentState = 'Idle';
+
+            events.forEach(event => {
+                if (time >= event.time && time < event.time + event.duration) {
+                    if (event.type === 'cpu') {
+                        if (event.state === 'running') {
+                            cpuCurrentState = 'Running Program';
+                            cpuState.className = 'state-value active';
+                        } else if (event.state === 'isr') {
+                            cpuCurrentState = 'Handling Interrupt';
+                            cpuState.className = 'state-value interrupt';
+                        }
+                    } else if (event.type === 'io' && event.state === 'transfer') {
+                        ioCurrentState = 'Transferring Data';
+                        ioState.className = 'state-value active';
+                    }
+                }
+            });
+
+            cpuState.textContent = cpuCurrentState;
+            ioState.textContent = ioCurrentState;
+            if (ioCurrentState === 'Idle') {
+                ioState.className = 'state-value';
+            }
+        }
+
+        function startSimulation() {
+            if (isPaused) {
+                isPaused = false;
+                pauseBtn.textContent = 'Pause';
+                animate();
+                return;
+            }
+
+            isRunning = true;
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+
+            // Clear tracks (keep time indicator)
+            cpuTrack.innerHTML = '<div class="time-indicator" id="time-indicator"></div>';
+            ioTrack.innerHTML = '';
+            interruptTrack.innerHTML = '';
+
+            currentTime = 0;
+            interruptCount = 0;
+            interruptCountDisplay.textContent = '0';
+
+            // Create all segments
+            events.forEach(event => {
+                if (event.type === 'cpu') createSegment(cpuTrack, event);
+                else if (event.type === 'io') createSegment(ioTrack, event);
+                else if (event.type === 'interrupt') createSegment(interruptTrack, event);
+            });
+
+            // Hide segments initially
+            document.querySelectorAll('.timeline-segment').forEach(seg => {
+                seg.style.opacity = '0.3';
+            });
+
+            logEvent(0, 'Simulation started. CPU begins executing user program.');
+
+            animate();
+        }
+
+        function animate() {
+            if (!isRunning || isPaused) return;
+
+            currentTime += speed;
+
+            // Update time indicator
+            const indicator = document.getElementById('time-indicator') || timeIndicator;
+            indicator.style.left = (currentTime / 10) + '%';
+
+            // Update displays
+            currentTimeDisplay.textContent = currentTime + ' ms';
+            updateState(currentTime);
+
+            // Reveal segments and log events
+            events.forEach(event => {
+                if (currentTime >= event.time && !event.logged) {
+                    event.logged = true;
+
+                    // Highlight segment
+                    const segments = document.querySelectorAll('.timeline-segment');
+                    segments.forEach(seg => {
+                        const left = parseFloat(seg.style.left);
+                        if (Math.abs(left - (event.time / 10)) < 1) {
+                            seg.style.opacity = '1';
+                        }
+                    });
+
+                    // Log messages
+                    if (event.type === 'cpu' && event.state === 'running' && event.time === 0) {
+                        logEvent(event.time, 'CPU: Running user program');
+                    } else if (event.type === 'io' && event.state === 'transfer') {
+                        logEvent(event.time, 'I/O: Starting data transfer');
+                    } else if (event.type === 'interrupt') {
+                        interruptCount++;
+                        interruptCountDisplay.textContent = interruptCount;
+                        logEvent(event.time, 'INTERRUPT: I/O device signals completion');
+                    } else if (event.type === 'cpu' && event.state === 'isr') {
+                        logEvent(event.time, 'CPU: Saving state, executing ISR');
+                    } else if (event.type === 'cpu' && event.state === 'running' && event.time > 0) {
+                        logEvent(event.time, 'CPU: Restoring state, resuming program');
+                    }
+                }
+            });
+
+            if (currentTime >= 1000) {
+                logEvent(1000, 'Simulation complete. Total interrupts handled: ' + interruptCount);
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                startBtn.textContent = 'Restart';
+                return;
+            }
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        function pauseSimulation() {
+            if (isPaused) {
+                isPaused = false;
+                pauseBtn.textContent = 'Pause';
+                animate();
+            } else {
+                isPaused = true;
+                pauseBtn.textContent = 'Resume';
+                cancelAnimationFrame(animationFrame);
+            }
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+            isPaused = false;
+            currentTime = 0;
+            interruptCount = 0;
+            cancelAnimationFrame(animationFrame);
+
+            // Reset events
+            events.forEach(event => event.logged = false);
+
+            // Clear tracks
+            cpuTrack.innerHTML = '<div class="time-indicator" id="time-indicator" style="left: 0;"></div>';
+            ioTrack.innerHTML = '';
+            interruptTrack.innerHTML = '';
+
+            // Reset displays
+            cpuState.textContent = 'Ready';
+            cpuState.className = 'state-value';
+            ioState.textContent = 'Idle';
+            ioState.className = 'state-value';
+            currentTimeDisplay.textContent = '0 ms';
+            interruptCountDisplay.textContent = '0';
+
+            // Reset buttons
+            startBtn.disabled = false;
+            startBtn.textContent = 'Start Simulation';
+            pauseBtn.disabled = true;
+            pauseBtn.textContent = 'Pause';
+
+            // Clear log
+            eventLog.innerHTML = '<p><span class="event-time">[0ms]</span> System reset. Click "Start Simulation" to begin.</p>';
+        }
+    </script>
+</body>
+</html>

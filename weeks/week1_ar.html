@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأسبوع الأول: مقدمة في نظم التشغيل</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <a href="week1.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <header>
+        <h1>مقدمة في نظم التشغيل</h1>
+        <p class="subtitle">الأسبوع الأول: الأساسيات وتنظيم نظام الحاسوب</p>
+    </header>
+
+    <nav class="table-of-contents no-print">
+        <h2>المحتويات</h2>
+        <ul>
+            <li><a href="#objectives">أهداف التعلم</a></li>
+            <li><a href="#what-is-os">1. ما هو نظام التشغيل؟</a></li>
+            <li><a href="#system-structure">2. هيكل نظام الحاسوب</a></li>
+            <li><a href="#layered-view">3. العرض التجريدي متعدد الطبقات</a></li>
+            <li><a href="#os-perspectives">4. ما تفعله أنظمة التشغيل</a></li>
+            <li><a href="#os-definition">5. تعريف نظام التشغيل</a></li>
+            <li><a href="#system-organization">6. تنظيم نظام الحاسوب</a></li>
+            <li><a href="#interrupts">7. المقاطعات ومعالجتها</a></li>
+            <li><a href="#io-structure">8. هيكل المدخلات/المخرجات</a></li>
+            <li><a href="#bootstrap">9. بدء تشغيل الحاسوب</a></li>
+            <li><a href="#summary">الملخص</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Learning Objectives -->
+        <section id="objectives" class="learning-objectives">
+            <h2>أهداف التعلم</h2>
+            <p>بنهاية هذه الجلسة، ستكون قادراً على:</p>
+            <ul>
+                <li>تعريف ما هو نظام التشغيل وشرح دوره</li>
+                <li>تحديد المكونات الأربعة لنظام الحاسوب</li>
+                <li>وصف العرض التجريدي متعدد الطبقات لنظام الحاسوب</li>
+                <li>شرح ثلاثة منظورات مختلفة لما تفعله أنظمة التشغيل</li>
+                <li>التمييز بين النواة وبرامج النظام والبرمجيات الوسيطة</li>
+                <li>فهم تنظيم نظام الحاسوب وناقل النظام</li>
+                <li>شرح كيف تعمل المقاطعات ولماذا هي مهمة</li>
+                <li>مقارنة عمليات المدخلات/المخرجات المتزامنة وغير المتزامنة</li>
+                <li>وصف عملية إقلاع الحاسوب</li>
+            </ul>
+        </section>
+
+        <!-- Section 1: What is an Operating System? -->
+        <section id="what-is-os" class="content-section">
+            <h2>1. ما هو نظام التشغيل؟</h2>
+
+            <div class="definition">
+                <h3>التعريف</h3>
+                <p><strong>نظام التشغيل (OS)</strong> هو برنامج يعمل كـ <em>وسيط</em> بين مستخدم الحاسوب وأجهزة الحاسوب.</p>
+            </div>
+
+            <h3>ثلاثة أهداف رئيسية</h3>
+            <p>لأنظمة التشغيل ثلاثة أهداف أساسية:</p>
+            <ol>
+                <li><strong>تنفيذ برامج المستخدم</strong> - تشغيل التطبيقات وحل مشاكل المستخدم</li>
+                <li><strong>جعل الحاسوب مريحاً</strong> - توفير واجهة سهلة الاستخدام</li>
+                <li><strong>استخدام الأجهزة بكفاءة</strong> - إدارة الموارد بفعالية</li>
+            </ol>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">نظام التشغيل كوسيط</h3>
+                </div>
+                <div class="diagram-code">
+                    <pre><code>    ┌─────────────┐
+    │  المستخدم   │
+    └──────┬──────┘
+           │
+           ▼
+    ┌─────────────┐
+    │    نظام     │
+    │  التشغيل   │
+    └──────┬──────┘
+           │
+           ▼
+    ┌─────────────┐
+    │   الأجهزة   │
+    └─────────────┘</code></pre>
+                </div>
+                <p class="diagram-note">نظام التشغيل يوفر جسراً بين المستخدمين والأجهزة المعقدة</p>
+            </div>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> بدون نظام تشغيل، سيحتاج المستخدمون إلى برمجة الأجهزة مباشرة باستخدام لغة الآلة - وهي مهمة صعبة للغاية ومعرضة للأخطاء. نظام التشغيل يخفي هذا التعقيد.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Computer System Structure -->
+        <section id="system-structure" class="content-section">
+            <h2>2. هيكل نظام الحاسوب</h2>
+
+            <p>يمكن تقسيم نظام الحاسوب تقريباً إلى أربعة مكونات:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">المكونات الأربعة لنظام الحاسوب</h3>
+                </div>
+                <div class="four-components-grid">
+                    <div class="component-layer layer-users">
+                        <h4>1. المستخدمون</h4>
+                        <p>الأشخاص، الآلات، حواسيب أخرى</p>
+                    </div>
+                    <div class="component-layer layer-applications">
+                        <h4>2. البرامج التطبيقية</h4>
+                        <p>معالجات النصوص، المترجمات، المتصفحات، الألعاب</p>
+                    </div>
+                    <div class="component-layer layer-os">
+                        <h4>3. نظام التشغيل</h4>
+                        <p>يتحكم وينسق استخدام الأجهزة</p>
+                    </div>
+                    <div class="component-layer layer-hardware">
+                        <h4>4. الأجهزة</h4>
+                        <p>المعالج، الذاكرة، أجهزة الإدخال/الإخراج</p>
+                    </div>
+                </div>
+            </div>
+
+            <article class="os-component">
+                <h4>الأجهزة (Hardware)</h4>
+                <p>توفر موارد الحوسبة الأساسية:</p>
+                <ul>
+                    <li><strong>وحدة المعالجة المركزية (CPU)</strong> - تنفذ التعليمات</li>
+                    <li><strong>الذاكرة</strong> - تخزن البيانات والبرامج مؤقتاً</li>
+                    <li><strong>أجهزة الإدخال/الإخراج</strong> - لوحات المفاتيح، الشاشات، الأقراص، واجهات الشبكة</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>نظام التشغيل</h4>
+                <p>يتحكم وينسق استخدام الأجهزة بين مختلف التطبيقات والمستخدمين. يعمل كـ <em>موزع للموارد</em> و<em>برنامج تحكم</em>.</p>
+            </article>
+
+            <article class="os-component">
+                <h4>البرامج التطبيقية</h4>
+                <p>تحدد الطرق التي تُستخدم بها موارد الحوسبة لحل مشاكل المستخدم:</p>
+                <ul>
+                    <li>معالجات النصوص</li>
+                    <li>المترجمات وأدوات التطوير</li>
+                    <li>متصفحات الويب</li>
+                    <li>أنظمة قواعد البيانات</li>
+                    <li>ألعاب الفيديو</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>المستخدمون</h4>
+                <p>يمكن أن يكونوا أشخاصاً أو آلات أخرى أو حواسيب أخرى تتفاعل مع النظام.</p>
+            </article>
+        </section>
+
+        <!-- Section 3: Abstract Layered View -->
+        <section id="layered-view" class="content-section">
+            <h2>3. العرض التجريدي متعدد الطبقات</h2>
+
+            <p>يوفر نظام التشغيل <strong>طبقة تجريد</strong> تخفي تعقيد الأجهزة عن التطبيقات والمستخدمين.</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">العرض متعدد الطبقات لنظام الحاسوب</h3>
+                </div>
+                <div class="layered-view">
+                    <div class="layer-item" style="background: #9b59b6; border-radius: 8px 8px 0 0;">المستخدم</div>
+                    <div class="layer-item" style="background: #3498db;">البرامج التطبيقية</div>
+                    <div class="layer-item" style="background: #e74c3c;">نظام التشغيل</div>
+                    <div class="layer-item" style="background: #2c3e50; border-radius: 0 0 8px 8px;">الأجهزة</div>
+                </div>
+                <p class="diagram-note">كل طبقة تتفاعل فقط مع الطبقة التي تحتها مباشرة</p>
+            </div>
+
+            <h3>فوائد نظام الطبقات</h3>
+            <ul>
+                <li><strong>التجريد</strong> - الطبقات العليا لا تحتاج لمعرفة تفاصيل الأجهزة</li>
+                <li><strong>النمطية</strong> - كل طبقة يمكن تعديلها بشكل مستقل</li>
+                <li><strong>الأمان</strong> - الطبقات السفلى يمكنها حماية الموارد من الطبقات العليا</li>
+                <li><strong>قابلية النقل</strong> - التطبيقات يمكن أن تعمل على أجهزة مختلفة</li>
+            </ul>
+
+            <div class="example">
+                <h4>مثال: الكتابة إلى ملف</h4>
+                <p>عندما يحفظ المستخدم مستنداً:</p>
+                <ol>
+                    <li><strong>المستخدم</strong> يضغط زر "حفظ"</li>
+                    <li><strong>التطبيق</strong> يستدعي دالة كتابة الملف</li>
+                    <li><strong>نظام التشغيل</strong> يترجم إلى عمليات القرص</li>
+                    <li><strong>الأجهزة</strong> تكتب البيانات فعلياً على القرص</li>
+                </ol>
+                <p>المستخدم لا يحتاج لمعرفة أي قطاع من القرص سيُستخدم!</p>
+            </div>
+        </section>
+
+        <!-- Section 4: What Operating Systems Do -->
+        <section id="os-perspectives" class="content-section">
+            <h2>4. ما تفعله أنظمة التشغيل</h2>
+
+            <p>يختلف دور نظام التشغيل حسب وجهة النظر:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">ثلاثة منظورات لأنظمة التشغيل</h3>
+                </div>
+                <div class="three-perspectives-grid">
+                    <div class="perspective-card perspective-pc">
+                        <h4>منظور الحاسب الشخصي</h4>
+                        <p><strong>التركيز:</strong> سهولة الاستخدام وتجربة المستخدم</p>
+                        <p>المستخدمون يريدون تطبيقاتهم تعمل بسلاسة. استغلال الموارد أقل أهمية لأن الحاسوب يخدم مستخدماً واحداً.</p>
+                    </div>
+                    <div class="perspective-card perspective-shared">
+                        <h4>منظور النظام المشترك</h4>
+                        <p><strong>التركيز:</strong> استغلال الموارد والعدالة</p>
+                        <p>عدة مستخدمين يتشاركون الموارد. نظام التشغيل يجب أن يوزع المعالج والذاكرة والمدخلات/المخرجات بشكل عادل وفعال.</p>
+                    </div>
+                    <div class="perspective-card perspective-mobile">
+                        <h4>منظور الأجهزة المحمولة</h4>
+                        <p><strong>التركيز:</strong> عمر البطارية والاستجابة</p>
+                        <p>الموارد محدودة. نظام التشغيل يجب أن يحسن كفاءة الطاقة مع الحفاظ على تجربة مستخدم جيدة.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>لا يوجد تعريف شامل:</strong> أنظمة التشغيل موجودة لأنها تقدم طريقة معقولة لحل مشكلة إنشاء نظام حوسبة قابل للاستخدام. التصميم يختلف بناءً على البيئة المستهدفة.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: OS Definition -->
+        <section id="os-definition" class="content-section">
+            <h2>5. تعريف نظام التشغيل: النواة، برامج النظام، البرمجيات الوسيطة</h2>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مكونات نظام التشغيل</h3>
+                </div>
+                <div class="os-circles-container">
+                    <div class="os-circles">
+                        <div class="circle circle-outer">
+                            <span class="circle-label label-middleware">البرمجيات الوسيطة والتطبيقات</span>
+                        </div>
+                        <div class="circle circle-middle">
+                            <span class="circle-label label-system">برامج النظام</span>
+                        </div>
+                        <div class="circle circle-inner">
+                            <span class="circle-label label-kernel">النواة</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">النواة تعمل دائماً؛ برامج النظام والبرمجيات الوسيطة تُحمّل حسب الحاجة</p>
+            </div>
+
+            <article class="os-component">
+                <h4>النواة (Kernel)</h4>
+                <p><strong>النواة</strong> هي البرنامج الوحيد الذي يعمل طوال الوقت على الحاسوب. هي قلب نظام التشغيل.</p>
+                <ul>
+                    <li>دائماً محملة في الذاكرة</li>
+                    <li>لها تحكم كامل في الأجهزة</li>
+                    <li>تدير العمليات والذاكرة والأجهزة</li>
+                    <li>تتعامل مع استدعاءات النظام من التطبيقات</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>برامج النظام</h4>
+                <p>برامج مرتبطة بنظام التشغيل لكنها ليست جزءاً من النواة:</p>
+                <ul>
+                    <li>أدوات إدارة الملفات</li>
+                    <li>أدوات معلومات الحالة</li>
+                    <li>دعم لغات البرمجة</li>
+                    <li>تحميل وتنفيذ البرامج</li>
+                    <li>برامج الاتصالات</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>البرمجيات الوسيطة (Middleware)</h4>
+                <p>أطر برمجية توفر خدمات إضافية لمطوري التطبيقات:</p>
+                <ul>
+                    <li>قواعد البيانات</li>
+                    <li>خدمات الوسائط المتعددة</li>
+                    <li>أطر الرسومات</li>
+                </ul>
+            </article>
+        </section>
+
+        <!-- Section 6: Computer System Organization -->
+        <section id="system-organization" class="content-section">
+            <h2>6. تنظيم نظام الحاسوب</h2>
+
+            <p>تستخدم الحواسيب الحديثة <strong>هندسة ناقل مشترك</strong> لربط جميع المكونات:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">هندسة ناقل النظام</h3>
+                </div>
+                <div class="bus-diagram">
+                    <div class="bus-components">
+                        <div class="bus-component cpu">المعالج</div>
+                        <div class="bus-component memory">الذاكرة</div>
+                        <div class="bus-component controller">متحكم القرص</div>
+                        <div class="bus-component controller">متحكم USB</div>
+                        <div class="bus-component controller">محول الرسومات</div>
+                    </div>
+                    <div class="bus-line"></div>
+                    <div class="devices-row">
+                        <div class="device">القرص الصلب</div>
+                        <div class="device">لوحة المفاتيح/الفأرة</div>
+                        <div class="device">الشاشة</div>
+                    </div>
+                </div>
+                <p class="diagram-note">جميع المكونات تتواصل عبر ناقل النظام المشترك</p>
+            </div>
+
+            <h3>المفاهيم الأساسية</h3>
+
+            <article class="os-component">
+                <h4>متحكمات الأجهزة</h4>
+                <p>كل جهاز له <strong>متحكم</strong> يدير هذا النوع المحدد من الأجهزة:</p>
+                <ul>
+                    <li>يحتوي على ذاكرة مؤقتة محلية ومسجلات</li>
+                    <li>يتعامل مع العمليات الخاصة بالجهاز</li>
+                    <li>يتواصل مع المعالج عبر المقاطعات</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>برامج التشغيل (Device Drivers)</h4>
+                <p>برامج توفر واجهة موحدة للوصول إلى مختلف الأجهزة:</p>
+                <ul>
+                    <li>تترجم طلبات نظام التشغيل إلى أوامر المتحكم</li>
+                    <li>كل نوع متحكم يحتاج برنامج تشغيل خاص</li>
+                    <li>تُحمّل كجزء من النواة أو كوحدات</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>التشغيل المتزامن</h4>
+                <p>المعالج ومتحكمات الأجهزة يمكن أن تعمل <em>بشكل متزامن</em>:</p>
+                <ul>
+                    <li>بينما يشغل المعالج برنامجاً، القرص يمكنه قراءة البيانات</li>
+                    <li>المتحكمات تتنافس على الوصول للذاكرة</li>
+                    <li>متحكم الذاكرة ينسق الوصول</li>
+                </ul>
+            </article>
+        </section>
+
+        <!-- Section 7: Interrupts -->
+        <section id="interrupts" class="content-section">
+            <h2>7. المقاطعات ومعالجتها</h2>
+
+            <div class="definition">
+                <h3>ما هي المقاطعة؟</h3>
+                <p><strong>المقاطعة</strong> هي إشارة للمعالج بأن حدثاً قد وقع يحتاج انتباهاً فورياً. تعلق مؤقتاً تنفيذ البرنامج الحالي.</p>
+            </div>
+
+            <h3>الخط الزمني للمقاطعة</h3>
+            <div class="diagram-container">
+                <div class="interrupt-timeline">
+                    <div class="timeline-row">
+                        <span class="timeline-label">المعالج</span>
+                        <div class="timeline-bar">
+                            <div class="timeline-segment segment-running" style="left: 0; width: 30%;">البرنامج</div>
+                            <div class="timeline-segment segment-isr" style="left: 30%; width: 25%;">ISR</div>
+                            <div class="timeline-segment segment-running" style="left: 55%; width: 45%;">البرنامج</div>
+                        </div>
+                    </div>
+                    <div class="timeline-row">
+                        <span class="timeline-label">الإدخال/الإخراج</span>
+                        <div class="timeline-bar">
+                            <div class="timeline-segment segment-waiting" style="left: 0; width: 10%;"></div>
+                            <div class="timeline-segment segment-interrupt" style="left: 10%; width: 20%;">نقل</div>
+                            <div class="timeline-segment segment-waiting" style="left: 30%; width: 70%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">عند اكتمال الإدخال/الإخراج، يقاطع المعالج لمعالجة البيانات</p>
+            </div>
+
+            <a href="../demos/interrupt_timeline_demo.html" class="demo-link">تشغيل العرض التفاعلي للخط الزمني للمقاطعات</a>
+
+            <h3>كيف تعمل المقاطعات</h3>
+            <ol>
+                <li><strong>تحدث المقاطعة</strong> - الجهاز يشير إلى الاكتمال أو الخطأ</li>
+                <li><strong>المعالج يحفظ الحالة</strong> - عداد البرنامج والمسجلات تُحفظ</li>
+                <li><strong>الانتقال إلى ISR</strong> - المعالج يبحث عن العنوان في <em>متجه المقاطعة</em></li>
+                <li><strong>تنفيذ ISR</strong> - روتين خدمة المقاطعة يعالج الحدث</li>
+                <li><strong>استعادة الحالة</strong> - المعالج يستعيد الحالة المحفوظة ويستمر</li>
+            </ol>
+
+            <h3>أنواع المقاطعات</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>النوع</th>
+                        <th>المصدر</th>
+                        <th>مثال</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>مقاطعة أجهزة</strong></td>
+                        <td>جهاز خارجي</td>
+                        <td>ضغطة لوحة مفاتيح، اكتمال القرص</td>
+                    </tr>
+                    <tr>
+                        <td><strong>مقاطعة برمجية (Trap)</strong></td>
+                        <td>تنفيذ البرنامج</td>
+                        <td>استدعاء نظام، قسمة على صفر</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="key-message">
+                <p><strong>لماذا المقاطعات مهمة:</strong> بدون مقاطعات، سيحتاج المعالج للتحقق باستمرار (polling) من كل جهاز. المقاطعات تسمح بمعالجة فعالة وموجهة بالأحداث للمدخلات/المخرجات.</p>
+            </div>
+        </section>
+
+        <!-- Section 8: I/O Structure -->
+        <section id="io-structure" class="content-section">
+            <h2>8. هيكل المدخلات/المخرجات: متزامن vs غير متزامن</h2>
+
+            <p>هناك طريقتان رئيسيتان للتعامل مع عمليات المدخلات/المخرجات:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">المدخلات/المخرجات المتزامنة vs غير المتزامنة</h3>
+                </div>
+                <div class="io-comparison">
+                    <div class="io-type io-sync">
+                        <h4>المدخلات/المخرجات المتزامنة</h4>
+                        <ol class="io-steps">
+                            <li>البرنامج يطلب I/O</li>
+                            <li>البرنامج يَنتظر (محظور)</li>
+                            <li>عملية I/O تكتمل</li>
+                            <li>البرنامج يستمر</li>
+                        </ol>
+                        <p><strong>المميزات:</strong> بسيطة البرمجة</p>
+                        <p><strong>العيوب:</strong> المعالج خامل أثناء I/O</p>
+                    </div>
+                    <div class="io-type io-async">
+                        <h4>المدخلات/المخرجات غير المتزامنة</h4>
+                        <ol class="io-steps">
+                            <li>البرنامج يطلب I/O</li>
+                            <li>البرنامج يَستمر بالعمل</li>
+                            <li>I/O تكتمل (مقاطعة)</li>
+                            <li>البرنامج يعالج النتيجة</li>
+                        </ol>
+                        <p><strong>المميزات:</strong> المعالج يبقى منتجاً</p>
+                        <p><strong>العيوب:</strong> برمجة أكثر تعقيداً</p>
+                    </div>
+                </div>
+            </div>
+
+            <a href="../demos/io_comparison_demo.html" class="demo-link">تشغيل العرض التفاعلي لمقارنة المدخلات/المخرجات</a>
+
+            <div class="example">
+                <h4>تشبيه من الحياة الواقعية</h4>
+                <p><strong>متزامن:</strong> تتصل بمطعم وتنتظر على الخط حتى يصبح طلبك جاهزاً. لا يمكنك فعل أي شيء آخر.</p>
+                <p><strong>غير متزامن:</strong> تطلب الطعام عبر تطبيق وتستمر في يومك. التطبيق يُخطرك عند وصول الطعام.</p>
+            </div>
+
+            <h3>جدول حالة الأجهزة</h3>
+            <p>نظام التشغيل يحتفظ بـ <strong>جدول حالة الأجهزة</strong> يتتبع:</p>
+            <ul>
+                <li>نوع كل جهاز</li>
+                <li>الحالة الحالية (خامل، مشغول)</li>
+                <li>طلبات I/O المعلقة</li>
+                <li>طابور الطلبات لكل جهاز</li>
+            </ul>
+        </section>
+
+        <!-- Section 9: Computer Startup -->
+        <section id="bootstrap" class="content-section">
+            <h2>9. بدء تشغيل الحاسوب (عملية الإقلاع)</h2>
+
+            <div class="definition">
+                <h3>ما هو الإقلاع؟</h3>
+                <p><strong>الإقلاع (Bootstrap)</strong> هو عملية تحميل نظام التشغيل عند تشغيل الحاسوب أو إعادة تشغيله.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">تسلسل الإقلاع</h3>
+                </div>
+                <div class="boot-sequence">
+                    <div class="boot-step">
+                        <span class="boot-icon">1.</span>
+                        <span class="boot-text">التشغيل - المعالج يبدأ من متجه إعادة التعيين</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">2.</span>
+                        <span class="boot-text">BIOS/UEFI يُحمّل من ROM/البرنامج الثابت</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">3.</span>
+                        <span class="boot-text">POST (اختبار التشغيل الذاتي) يعمل</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">4.</span>
+                        <span class="boot-text">تحديد جهاز الإقلاع (قرص، USB، شبكة)</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">5.</span>
+                        <span class="boot-text">محمّل الإقلاع يُحمّل من قطاع الإقلاع</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">6.</span>
+                        <span class="boot-text">محمّل الإقلاع يُحمّل نواة نظام التشغيل في الذاكرة</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">7.</span>
+                        <span class="boot-text">النواة تُهيّئ الأجهزة وبرامج التشغيل</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                    <div class="boot-step">
+                        <span class="boot-icon">8.</span>
+                        <span class="boot-text">خدمات النظام وواجهة المستخدم تبدأ</span>
+                        <span class="boot-status">[OK]</span>
+                    </div>
+                </div>
+            </div>
+
+            <a href="../demos/boot_sequence_demo.html" class="demo-link">تشغيل العرض التفاعلي لتسلسل الإقلاع</a>
+
+            <h3>المكونات الرئيسية</h3>
+
+            <article class="os-component">
+                <h4>محمّل الإقلاع (Bootstrap Loader)</h4>
+                <p>برنامج صغير مخزن في ROM أو البرنامج الثابت يقوم بـ:</p>
+                <ul>
+                    <li>تهيئة مسجلات المعالج والذاكرة</li>
+                    <li>إجراء تشخيصات الأجهزة</li>
+                    <li>تحديد وتحميل نواة نظام التشغيل</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>BIOS vs UEFI</h4>
+                <ul>
+                    <li><strong>BIOS</strong> (نظام الإدخال/الإخراج الأساسي) - برنامج ثابت تقليدي، محدود بوضع 16-بت</li>
+                    <li><strong>UEFI</strong> (واجهة البرنامج الثابت الموحدة القابلة للتوسعة) - بديل حديث، يدعم 64-بت، إقلاع أسرع</li>
+                </ul>
+            </article>
+
+            <div class="limitations-box">
+                <h4>ماذا لو فشل الإقلاع؟</h4>
+                <p>إذا لم تستطع عملية الإقلاع العثور على نظام تشغيل صالح:</p>
+                <ul>
+                    <li>تُعرض رسالة خطأ (مثل "نظام التشغيل غير موجود")</li>
+                    <li>النظام يتوقف أو يدخل وضع الاستعادة</li>
+                    <li>المستخدم يجب أن يصلح إعدادات الإقلاع أو يعيد تثبيت نظام التشغيل</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary" class="content-section summary">
+            <h2>الملخص والنقاط الرئيسية</h2>
+
+            <h3>ما تعلمناه</h3>
+            <ol>
+                <li><strong>أنظمة التشغيل وسطاء</strong> بين المستخدمين والأجهزة، توفر الراحة والكفاءة</li>
+
+                <li><strong>أنظمة الحاسوب لها أربعة مكونات:</strong> الأجهزة، نظام التشغيل، البرامج التطبيقية، والمستخدمون</li>
+
+                <li><strong>العرض متعدد الطبقات</strong> يوضح كيف يخفي التجريد التعقيد عن المستويات العليا</li>
+
+                <li><strong>منظور نظام التشغيل يختلف:</strong> شخصي (الراحة)، مشترك (توزيع الموارد)، محمول (الكفاءة)</li>
+
+                <li><strong>النواة هي الجوهر</strong> - تعمل دائماً، محاطة ببرامج النظام والبرمجيات الوسيطة</li>
+
+                <li><strong>الحواسيب الحديثة تستخدم هندسة الناقل</strong> حيث يتواصل المعالج والذاكرة والمتحكمات عبر ناقل مشترك</li>
+
+                <li><strong>المقاطعات تمكّن I/O فعال</strong> بالإشارة إلى الأحداث بدلاً من الاستقصاء المستمر</li>
+
+                <li><strong>I/O المتزامن يحجب</strong> بينما I/O غير المتزامن يسمح بالمعالجة المتزامنة</li>
+
+                <li><strong>الإقلاع يُحمّل نظام التشغيل</strong> عبر تسلسل من BIOS/UEFI إلى تهيئة النواة</li>
+            </ol>
+
+            <div class="key-message">
+                <p><strong>نظرة للأمام:</strong> في الأسبوع الثاني، سنستكشف إدارة العمليات - كيف يتعامل نظام التشغيل مع برامج متعددة قيد التشغيل، ويجدول وقت المعالج، ويدير حالات العمليات.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <section id="image-credits">
+            <h2>الاعتمادات والإسنادات</h2>
+            <p class="credits-intro">جميع الرسوم البيانية في هذا المستند هي أعمال تعليمية أصلية تم إنشاؤها خصيصاً لهذا المقرر.</p>
+            <ul class="credits-list">
+                <li><strong>مخطط هيكل نظام الحاسوب:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مخطط العرض متعدد الطبقات:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مخطط مكونات نظام التشغيل:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مخطط هندسة الناقل:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>الخط الزمني للمقاطعة:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مخطط مقارنة I/O:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مخطط تسلسل الإقلاع:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+            </ul>
+            <p class="credits-intro" style="margin-top: 1rem;">
+                <strong>الرخصة:</strong> جميع الرسوم البيانية مرخصة تحت رخصة المشاع الإبداعي - نسب المصنف 4.0 دولي (CC BY 4.0).
+            </p>
+        </section>
+    </footer>
+</body>
+</html>

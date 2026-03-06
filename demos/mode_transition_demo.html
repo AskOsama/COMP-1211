@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mode Transition Demo | Operating Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --user-mode-color: #e74c3c;
+            --kernel-mode-color: #27ae60;
+            --transition-color: #f39c12;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: white;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1em;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Mode Display */
+        .mode-display {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 2rem;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .mode-display {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        .mode-box {
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.5s ease;
+            opacity: 0.5;
+        }
+
+        .mode-box.active {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .user-mode {
+            background: rgba(231, 76, 60, 0.2);
+            border: 3px solid var(--user-mode-color);
+        }
+
+        .user-mode.active {
+            box-shadow: 0 0 40px rgba(231, 76, 60, 0.5);
+        }
+
+        .kernel-mode {
+            background: rgba(39, 174, 96, 0.2);
+            border: 3px solid var(--kernel-mode-color);
+        }
+
+        .kernel-mode.active {
+            box-shadow: 0 0 40px rgba(39, 174, 96, 0.5);
+        }
+
+        .mode-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-mode .mode-title { color: var(--user-mode-color); }
+        .kernel-mode .mode-title { color: var(--kernel-mode-color); }
+
+        .mode-bit {
+            font-family: monospace;
+            font-size: 1.2em;
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .mode-description {
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .mode-activities {
+            text-align: left;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .mode-activities h4 {
+            margin-bottom: 0.5rem;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .mode-activities ul {
+            margin-left: 1.5rem;
+            font-size: 0.85em;
+        }
+
+        .mode-activities li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Transition Arrow */
+        .transition-area {
+            text-align: center;
+        }
+
+        .transition-arrow {
+            font-size: 3em;
+            color: var(--transition-color);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        .transition-arrow.animating {
+            animation: arrowMove 0.5s ease;
+        }
+
+        @keyframes arrowMove {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(10px); }
+        }
+
+        .transition-label {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-top: 0.5rem;
+        }
+
+        /* Animation Section */
+        .animation-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .animation-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #3498db;
+        }
+
+        /* Process Flow */
+        .process-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            opacity: 0.4;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step.active {
+            opacity: 1;
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+        }
+
+        .flow-step.completed {
+            opacity: 0.7;
+            background: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid var(--kernel-mode-color);
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-desc {
+            font-size: 0.85em;
+            color: #aaa;
+        }
+
+        .step-mode {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .step-mode.user {
+            background: var(--user-mode-color);
+        }
+
+        .step-mode.kernel {
+            background: var(--kernel-mode-color);
+        }
+
+        .step-mode.transition {
+            background: var(--transition-color);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #219a52;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #34495e;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #2c3e50;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* System Call Selector */
+        .syscall-selector {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .syscall-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .syscall-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #3498db;
+        }
+
+        .syscall-btn.selected {
+            background: rgba(52, 152, 219, 0.3);
+            border-color: #3498db;
+        }
+
+        /* Log Window */
+        .log-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .log-section h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #3498db;
+        }
+
+        .log-window {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .log-time {
+            color: #666;
+        }
+
+        .log-user {
+            color: var(--user-mode-color);
+        }
+
+        .log-kernel {
+            color: var(--kernel-mode-color);
+        }
+
+        .log-transition {
+            color: var(--transition-color);
+        }
+
+        /* Explanation */
+        .explanation {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .explanation h4 {
+            margin-bottom: 0.5rem;
+            color: #3498db;
+        }
+
+        .explanation p {
+            color: #ddd;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            .mode-box {
+                padding: 1.5rem;
+            }
+
+            .mode-title {
+                font-size: 1.2em;
+            }
+
+            .transition-arrow {
+                transform: rotate(90deg);
+            }
+
+            .flow-step {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .step-mode {
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../weeks/week2.html#mode-transition" class="back-link">&larr; Back to Week 2</a>
+
+        <header>
+            <h1>User Mode ↔ Kernel Mode Transition</h1>
+            <p class="subtitle">Visualize how the CPU switches between modes</p>
+        </header>
+
+        <!-- Mode Display -->
+        <div class="mode-display">
+            <div class="mode-box user-mode active" id="userModeBox">
+                <div class="mode-title">User Mode</div>
+                <div class="mode-bit">Mode Bit = 1</div>
+                <div class="mode-description">Restricted access to hardware</div>
+                <div class="mode-activities">
+                    <h4>What runs here:</h4>
+                    <ul>
+                        <li>User applications</li>
+                        <li>Web browsers</li>
+                        <li>Word processors</li>
+                        <li>Games</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="transition-area">
+                <div class="transition-arrow" id="transitionArrow">⟷</div>
+                <div class="transition-label">System Call / Trap / Interrupt</div>
+            </div>
+
+            <div class="mode-box kernel-mode" id="kernelModeBox">
+                <div class="mode-title">Kernel Mode</div>
+                <div class="mode-bit">Mode Bit = 0</div>
+                <div class="mode-description">Full hardware access</div>
+                <div class="mode-activities">
+                    <h4>What runs here:</h4>
+                    <ul>
+                        <li>OS kernel</li>
+                        <li>Device drivers</li>
+                        <li>System services</li>
+                        <li>Interrupt handlers</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Animation Section -->
+        <div class="animation-section">
+            <h2>System Call Animation</h2>
+
+            <p style="text-align: center; color: #aaa; margin-bottom: 1.5rem;">
+                Select a system call type and click "Make System Call" to see the transition
+            </p>
+
+            <!-- System Call Selector -->
+            <div class="syscall-selector">
+                <button class="syscall-btn selected" data-syscall="file" onclick="selectSyscall('file')">
+                    📁 File Open
+                </button>
+                <button class="syscall-btn" data-syscall="read" onclick="selectSyscall('read')">
+                    📖 File Read
+                </button>
+                <button class="syscall-btn" data-syscall="write" onclick="selectSyscall('write')">
+                    ✍️ File Write
+                </button>
+                <button class="syscall-btn" data-syscall="network" onclick="selectSyscall('network')">
+                    🌐 Network Send
+                </button>
+            </div>
+
+            <!-- Process Flow -->
+            <div class="process-flow" id="processFlow">
+                <div class="flow-step" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Application requests OS service</div>
+                        <div class="step-desc">Program calls a library function (e.g., open(), read(), write())</div>
+                    </div>
+                    <span class="step-mode user">User Mode</span>
+                </div>
+
+                <div class="flow-step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Trap instruction executed</div>
+                        <div class="step-desc">Software interrupt triggers mode switch</div>
+                    </div>
+                    <span class="step-mode transition">Transition</span>
+                </div>
+
+                <div class="flow-step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Hardware changes mode bit</div>
+                        <div class="step-desc">Mode bit changes from 1 to 0, CPU now in kernel mode</div>
+                    </div>
+                    <span class="step-mode transition">Transition</span>
+                </div>
+
+                <div class="flow-step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Kernel handles the request</div>
+                        <div class="step-desc">OS validates request and performs the operation</div>
+                    </div>
+                    <span class="step-mode kernel">Kernel Mode</span>
+                </div>
+
+                <div class="flow-step" data-step="5">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <div class="step-title">Operation completes</div>
+                        <div class="step-desc">Kernel prepares return value and restores user state</div>
+                    </div>
+                    <span class="step-mode kernel">Kernel Mode</span>
+                </div>
+
+                <div class="flow-step" data-step="6">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <div class="step-title">Return to user mode</div>
+                        <div class="step-desc">Mode bit changes back to 1, control returns to application</div>
+                    </div>
+                    <span class="step-mode user">User Mode</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="startAnimation()">
+                    Make System Call
+                </button>
+                <button class="btn btn-secondary" id="resetBtn" onclick="resetAnimation()">
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Log Window -->
+        <div class="log-section">
+            <h2>System Log</h2>
+            <div class="log-window" id="logWindow">
+                <div class="log-entry">
+                    <span class="log-time">[00:00:00]</span>
+                    <span class="log-user">System ready. Click "Make System Call" to begin.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explanation -->
+        <div class="explanation">
+            <h4>Understanding Mode Transitions</h4>
+            <p>
+                The CPU uses a <strong>mode bit</strong> to track whether it's executing user code or kernel code.
+                When a user program needs OS services (like file I/O, network access, or memory allocation), it must
+                make a <strong>system call</strong>. This triggers a controlled transition to kernel mode where the
+                OS can safely access hardware on behalf of the program. The transition mechanism ensures that user
+                programs cannot bypass security checks or directly access protected resources.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let isAnimating = false;
+        let selectedSyscall = 'file';
+        let logCounter = 0;
+
+        const syscallMessages = {
+            file: {
+                name: 'open("/etc/config.txt")',
+                kernelAction: 'Validating file path and permissions...',
+                result: 'File handle fd=3 created successfully'
+            },
+            read: {
+                name: 'read(fd, buffer, 1024)',
+                kernelAction: 'Reading data from disk cache...',
+                result: 'Read 1024 bytes into buffer'
+            },
+            write: {
+                name: 'write(fd, data, 256)',
+                kernelAction: 'Writing data to disk buffer...',
+                result: 'Wrote 256 bytes to file'
+            },
+            network: {
+                name: 'send(socket, packet, len)',
+                kernelAction: 'Accessing network interface...',
+                result: 'Packet queued for transmission'
+            }
+        };
+
+        function selectSyscall(syscall) {
+            selectedSyscall = syscall;
+            document.querySelectorAll('.syscall-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.querySelector(`[data-syscall="${syscall}"]`).classList.add('selected');
+        }
+
+        function addLog(message, type = 'user') {
+            const logWindow = document.getElementById('logWindow');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-${type}">${message}</span>`;
+            logWindow.appendChild(entry);
+            logWindow.scrollTop = logWindow.scrollHeight;
+        }
+
+        function setMode(mode) {
+            const userBox = document.getElementById('userModeBox');
+            const kernelBox = document.getElementById('kernelModeBox');
+            const arrow = document.getElementById('transitionArrow');
+
+            if (mode === 'user') {
+                userBox.classList.add('active');
+                kernelBox.classList.remove('active');
+            } else if (mode === 'kernel') {
+                userBox.classList.remove('active');
+                kernelBox.classList.add('active');
+            } else {
+                // Transition
+                arrow.classList.add('animating');
+                setTimeout(() => arrow.classList.remove('animating'), 500);
+            }
+        }
+
+        function activateStep(stepNum) {
+            document.querySelectorAll('.flow-step').forEach(step => {
+                const num = parseInt(step.dataset.step);
+                if (num < stepNum) {
+                    step.classList.remove('active');
+                    step.classList.add('completed');
+                } else if (num === stepNum) {
+                    step.classList.add('active');
+                    step.classList.remove('completed');
+                } else {
+                    step.classList.remove('active', 'completed');
+                }
+            });
+        }
+
+        async function startAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = true;
+
+            const syscall = syscallMessages[selectedSyscall];
+
+            // Reset first
+            document.querySelectorAll('.flow-step').forEach(s => s.classList.remove('active', 'completed'));
+
+            // Step 1: User mode - app calls function
+            activateStep(1);
+            setMode('user');
+            addLog(`Application calls ${syscall.name}`, 'user');
+            await delay(1500);
+
+            // Step 2: Trap instruction
+            activateStep(2);
+            setMode('transition');
+            addLog('Executing TRAP instruction (INT 0x80)', 'transition');
+            await delay(1200);
+
+            // Step 3: Mode bit changes
+            activateStep(3);
+            addLog('MODE BIT: 1 → 0 (switching to kernel mode)', 'transition');
+            await delay(1200);
+
+            // Step 4: Kernel handles request
+            activateStep(4);
+            setMode('kernel');
+            addLog('Entering kernel mode...', 'kernel');
+            await delay(800);
+            addLog(syscall.kernelAction, 'kernel');
+            await delay(1500);
+
+            // Step 5: Operation completes
+            activateStep(5);
+            addLog(syscall.result, 'kernel');
+            await delay(1200);
+
+            // Step 6: Return to user mode
+            activateStep(6);
+            setMode('transition');
+            addLog('MODE BIT: 0 → 1 (returning to user mode)', 'transition');
+            await delay(800);
+            setMode('user');
+            addLog('Control returned to application', 'user');
+
+            isAnimating = false;
+            startBtn.disabled = false;
+        }
+
+        function resetAnimation() {
+            isAnimating = false;
+            document.querySelectorAll('.flow-step').forEach(s => s.classList.remove('active', 'completed'));
+            setMode('user');
+            document.getElementById('startBtn').disabled = false;
+
+            const logWindow = document.getElementById('logWindow');
+            logWindow.innerHTML = `
+                <div class="log-entry">
+                    <span class="log-time">[${new Date().toLocaleTimeString()}]</span>
+                    <span class="log-user">System reset. Click "Make System Call" to begin.</span>
+                </div>
+            `;
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>

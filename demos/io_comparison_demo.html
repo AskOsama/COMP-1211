@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synchronous vs Asynchronous I/O Demo | Operating Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --sync-color: #e74c3c;
+            --async-color: #27ae60;
+            --light-gray: #f8f9fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        h1 {
+            font-size: 2em;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Comparison Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .io-panel {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 3px solid transparent;
+        }
+
+        .io-panel.sync {
+            border-color: var(--sync-color);
+        }
+
+        .io-panel.async {
+            border-color: var(--async-color);
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .panel-header h2 {
+            font-size: 1.4em;
+            margin-bottom: 0.5rem;
+        }
+
+        .sync .panel-header h2 { color: var(--sync-color); }
+        .async .panel-header h2 { color: var(--async-color); }
+
+        .panel-subtitle {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Visualization */
+        .visualization {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            min-height: 200px;
+        }
+
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .timeline-label {
+            width: 70px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-align: right;
+            padding-right: 0.75rem;
+        }
+
+        .timeline-bar {
+            flex: 1;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-segment {
+            position: absolute;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7em;
+            font-weight: 600;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .segment-work { background: #27ae60; }
+        .segment-wait { background: #95a5a6; }
+        .segment-io { background: #3498db; }
+        .segment-blocked { background: #e74c3c; }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+
+        .sync .stat-value { color: var(--sync-color); }
+        .async .stat-value { color: var(--async-color); }
+
+        /* Task List */
+        .task-list {
+            margin-top: 1rem;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9em;
+        }
+
+        .task-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            color: white;
+        }
+
+        .task-pending { background: #bdc3c7; }
+        .task-running { background: #f39c12; animation: pulse 1s infinite; }
+        .task-complete { background: #27ae60; }
+        .task-blocked { background: #e74c3c; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Summary */
+        .summary-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--light-gray);
+            border-radius: 12px;
+        }
+
+        .summary-section h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .comparison-table th {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .comparison-table td:nth-child(2) {
+            color: var(--sync-color);
+            font-weight: 600;
+        }
+
+        .comparison-table td:nth-child(3) {
+            color: var(--async-color);
+            font-weight: 600;
+        }
+
+        /* Winner Badge */
+        .winner-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: var(--async-color);
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .winner-badge.hidden {
+            display: none;
+        }
+
+        /* Explanation */
+        .explanation {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-top: 1.5rem;
+        }
+
+        .explanation h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline-label {
+                width: 50px;
+                font-size: 0.75em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../weeks/week1.html#io-structure" class="back-link">&larr; Back to Week 1</a>
+
+        <header>
+            <h1>Synchronous vs Asynchronous I/O</h1>
+            <p class="subtitle">See the difference in CPU utilization between I/O methods</p>
+        </header>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="startSimulation()">
+                Start Comparison
+            </button>
+            <button class="btn btn-secondary" onclick="resetSimulation()">
+                Reset
+            </button>
+        </div>
+
+        <!-- Comparison Grid -->
+        <div class="comparison-grid">
+            <!-- Synchronous Panel -->
+            <div class="io-panel sync">
+                <div class="panel-header">
+                    <h2>Synchronous I/O</h2>
+                    <p class="panel-subtitle">CPU waits for each I/O to complete</p>
+                </div>
+
+                <div class="visualization">
+                    <div class="timeline-row">
+                        <span class="timeline-label">CPU</span>
+                        <div class="timeline-bar" id="sync-cpu-bar"></div>
+                    </div>
+                    <div class="timeline-row">
+                        <span class="timeline-label">I/O</span>
+                        <div class="timeline-bar" id="sync-io-bar"></div>
+                    </div>
+                </div>
+
+                <div class="task-list" id="sync-tasks">
+                    <div class="task-item">
+                        <div class="task-status task-pending" id="sync-task-1">1</div>
+                        <span>Read file A</span>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-status task-pending" id="sync-task-2">2</div>
+                        <span>Read file B</span>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-status task-pending" id="sync-task-3">3</div>
+                        <span>Read file C</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">CPU Utilization</div>
+                        <div class="stat-value" id="sync-cpu-util">0%</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Time</div>
+                        <div class="stat-value" id="sync-time">0s</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asynchronous Panel -->
+            <div class="io-panel async">
+                <div class="panel-header">
+                    <h2>Asynchronous I/O</h2>
+                    <p class="panel-subtitle">CPU continues while I/O works</p>
+                </div>
+
+                <div class="visualization">
+                    <div class="timeline-row">
+                        <span class="timeline-label">CPU</span>
+                        <div class="timeline-bar" id="async-cpu-bar"></div>
+                    </div>
+                    <div class="timeline-row">
+                        <span class="timeline-label">I/O</span>
+                        <div class="timeline-bar" id="async-io-bar"></div>
+                    </div>
+                </div>
+
+                <div class="task-list" id="async-tasks">
+                    <div class="task-item">
+                        <div class="task-status task-pending" id="async-task-1">1</div>
+                        <span>Read file A</span>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-status task-pending" id="async-task-2">2</div>
+                        <span>Read file B</span>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-status task-pending" id="async-task-3">3</div>
+                        <span>Read file C</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">CPU Utilization</div>
+                        <div class="stat-value" id="async-cpu-util">0%</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Time</div>
+                        <div class="stat-value" id="async-time">0s</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Winner Badge -->
+        <div style="text-align: center;">
+            <div class="winner-badge hidden" id="winner-badge">
+                Async I/O is <span id="speedup">0x</span> faster!
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <h3>Comparison Summary</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>Synchronous</th>
+                        <th>Asynchronous</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CPU Behavior</td>
+                        <td>Waits (blocked)</td>
+                        <td>Continues working</td>
+                    </tr>
+                    <tr>
+                        <td>Programming</td>
+                        <td>Simpler</td>
+                        <td>More complex</td>
+                    </tr>
+                    <tr>
+                        <td>CPU Efficiency</td>
+                        <td>Low (idle during I/O)</td>
+                        <td>High (always busy)</td>
+                    </tr>
+                    <tr>
+                        <td>Throughput</td>
+                        <td>Lower</td>
+                        <td>Higher</td>
+                    </tr>
+                    <tr>
+                        <td>Best For</td>
+                        <td>Simple scripts</td>
+                        <td>Servers, real-time apps</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Explanation -->
+        <div class="explanation">
+            <h4>Understanding the Difference</h4>
+            <p>
+                <strong>Synchronous I/O:</strong> When a program requests data (e.g., reading a file),
+                the CPU stops and waits until the data arrives. During this time, the CPU is blocked and cannot do other work.
+                This is like waiting on the phone until someone answers - you can't do anything else.
+            </p>
+            <p style="margin-top: 0.5rem;">
+                <strong>Asynchronous I/O:</strong> The program requests data and immediately continues with other work.
+                When the data arrives, an interrupt notifies the program. This is like sending a text message -
+                you can do other things while waiting for a reply.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+
+        // Timeline segments for visualization
+        const WORK_TIME = 100; // ms of CPU work
+        const IO_TIME = 300;   // ms of I/O time
+        const TASKS = 3;
+
+        function createSegment(left, width, className, text) {
+            const seg = document.createElement('div');
+            seg.className = 'bar-segment ' + className;
+            seg.style.left = left + '%';
+            seg.style.width = width + '%';
+            seg.textContent = text;
+            return seg;
+        }
+
+        function setTaskStatus(id, status) {
+            const task = document.getElementById(id);
+            task.className = 'task-status task-' + status;
+        }
+
+        async function runSyncSimulation() {
+            const cpuBar = document.getElementById('sync-cpu-bar');
+            const ioBar = document.getElementById('sync-io-bar');
+            const cpuUtil = document.getElementById('sync-cpu-util');
+            const totalTime = document.getElementById('sync-time');
+
+            cpuBar.innerHTML = '';
+            ioBar.innerHTML = '';
+
+            let currentTime = 0;
+            const totalDuration = TASKS * (WORK_TIME + IO_TIME);
+            let cpuWorkTime = 0;
+
+            for (let i = 1; i <= TASKS; i++) {
+                // CPU work phase
+                setTaskStatus('sync-task-' + i, 'running');
+
+                const workStart = (currentTime / totalDuration) * 100;
+                const workWidth = (WORK_TIME / totalDuration) * 100;
+
+                const workSeg = createSegment(workStart, workWidth, 'segment-work', 'Work');
+                cpuBar.appendChild(workSeg);
+                cpuWorkTime += WORK_TIME;
+
+                await new Promise(r => setTimeout(r, WORK_TIME * 2));
+                currentTime += WORK_TIME;
+
+                // I/O phase - CPU blocked
+                const ioStart = (currentTime / totalDuration) * 100;
+                const ioWidth = (IO_TIME / totalDuration) * 100;
+
+                const blockedSeg = createSegment(ioStart, ioWidth, 'segment-blocked', 'Blocked');
+                cpuBar.appendChild(blockedSeg);
+
+                const ioSeg = createSegment(ioStart, ioWidth, 'segment-io', 'I/O ' + i);
+                ioBar.appendChild(ioSeg);
+
+                setTaskStatus('sync-task-' + i, 'blocked');
+
+                await new Promise(r => setTimeout(r, IO_TIME * 2));
+                currentTime += IO_TIME;
+
+                setTaskStatus('sync-task-' + i, 'complete');
+
+                // Update stats
+                const utilization = Math.round((cpuWorkTime / currentTime) * 100);
+                cpuUtil.textContent = utilization + '%';
+                totalTime.textContent = (currentTime / 1000).toFixed(1) + 's';
+            }
+
+            return currentTime;
+        }
+
+        async function runAsyncSimulation() {
+            const cpuBar = document.getElementById('async-cpu-bar');
+            const ioBar = document.getElementById('async-io-bar');
+            const cpuUtil = document.getElementById('async-cpu-util');
+            const totalTime = document.getElementById('async-time');
+
+            cpuBar.innerHTML = '';
+            ioBar.innerHTML = '';
+
+            // In async, all I/O starts together and CPU keeps working
+            const ioTotalTime = IO_TIME; // All I/O happens in parallel
+            const cpuTotalTime = TASKS * WORK_TIME;
+            const totalDuration = Math.max(ioTotalTime, cpuTotalTime);
+
+            let currentTime = 0;
+
+            // Start all I/O operations
+            for (let i = 1; i <= TASKS; i++) {
+                setTaskStatus('async-task-' + i, 'running');
+            }
+
+            // Show I/O operations starting in parallel
+            const ioWidth = (IO_TIME / totalDuration) * 100;
+            const ioSeg = createSegment(0, ioWidth, 'segment-io', 'I/O 1,2,3');
+            ioBar.appendChild(ioSeg);
+
+            // CPU keeps working
+            for (let i = 1; i <= TASKS; i++) {
+                const workStart = ((i - 1) * WORK_TIME / totalDuration) * 100;
+                const workWidth = (WORK_TIME / totalDuration) * 100;
+
+                const workSeg = createSegment(workStart, workWidth, 'segment-work', 'Work ' + i);
+                cpuBar.appendChild(workSeg);
+
+                await new Promise(r => setTimeout(r, WORK_TIME * 2));
+                currentTime += WORK_TIME;
+
+                setTaskStatus('async-task-' + i, 'complete');
+
+                // Update stats
+                const utilization = Math.round((currentTime / totalDuration) * 100);
+                cpuUtil.textContent = Math.min(utilization, 100) + '%';
+                totalTime.textContent = (Math.max(currentTime, IO_TIME) / 1000).toFixed(1) + 's';
+            }
+
+            // Wait for I/O if still running
+            if (IO_TIME > cpuTotalTime) {
+                await new Promise(r => setTimeout(r, (IO_TIME - cpuTotalTime) * 2));
+            }
+
+            // Final stats
+            cpuUtil.textContent = Math.round((cpuTotalTime / totalDuration) * 100) + '%';
+            totalTime.textContent = (totalDuration / 1000).toFixed(1) + 's';
+
+            return totalDuration;
+        }
+
+        async function startSimulation() {
+            if (isRunning) return;
+
+            isRunning = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('winner-badge').classList.add('hidden');
+
+            // Reset task statuses
+            for (let i = 1; i <= TASKS; i++) {
+                setTaskStatus('sync-task-' + i, 'pending');
+                setTaskStatus('async-task-' + i, 'pending');
+            }
+
+            // Reset stats
+            document.getElementById('sync-cpu-util').textContent = '0%';
+            document.getElementById('sync-time').textContent = '0s';
+            document.getElementById('async-cpu-util').textContent = '0%';
+            document.getElementById('async-time').textContent = '0s';
+
+            // Run both simulations in parallel
+            const [syncTime, asyncTime] = await Promise.all([
+                runSyncSimulation(),
+                runAsyncSimulation()
+            ]);
+
+            // Show winner
+            const speedup = (syncTime / asyncTime).toFixed(1);
+            document.getElementById('speedup').textContent = speedup + 'x';
+            document.getElementById('winner-badge').classList.remove('hidden');
+
+            isRunning = false;
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+
+            // Clear bars
+            document.getElementById('sync-cpu-bar').innerHTML = '';
+            document.getElementById('sync-io-bar').innerHTML = '';
+            document.getElementById('async-cpu-bar').innerHTML = '';
+            document.getElementById('async-io-bar').innerHTML = '';
+
+            // Reset task statuses
+            for (let i = 1; i <= TASKS; i++) {
+                setTaskStatus('sync-task-' + i, 'pending');
+                setTaskStatus('async-task-' + i, 'pending');
+            }
+
+            // Reset stats
+            document.getElementById('sync-cpu-util').textContent = '0%';
+            document.getElementById('sync-time').textContent = '0s';
+            document.getElementById('async-cpu-util').textContent = '0%';
+            document.getElementById('async-time').textContent = '0s';
+
+            // Hide winner
+            document.getElementById('winner-badge').classList.add('hidden');
+
+            document.getElementById('startBtn').disabled = false;
+        }
+    </script>
+</body>
+</html>

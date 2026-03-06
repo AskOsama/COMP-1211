@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأسبوع الثالث: خدمات نظام التشغيل والأمان وبنى الأنظمة</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <a href="week3.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <header>
+        <h1>خدمات نظام التشغيل والأمان وبنى الأنظمة</h1>
+        <p class="subtitle">الأسبوع الثالث: استكشاف خدمات النظام والحماية ونماذج البنية</p>
+    </header>
+
+    <nav class="table-of-contents no-print">
+        <h2>المحتويات</h2>
+        <ul>
+            <li><a href="#objectives">أهداف التعلم</a></li>
+            <li><a href="#file-system">1. إدارة نظام الملفات</a></li>
+            <li><a href="#mass-storage">2. إدارة التخزين الكتلي</a></li>
+            <li><a href="#caching">3. التخزين المؤقت (Caching)</a></li>
+            <li><a href="#io-subsystem">4. النظام الفرعي للإدخال/الإخراج</a></li>
+            <li><a href="#protection-security">5. الحماية والأمان</a></li>
+            <li><a href="#virtualization">6. المحاكاة الافتراضية (Virtualization)</a></li>
+            <li><a href="#distributed-systems">7. الأنظمة الموزعة</a></li>
+            <li><a href="#system-architecture">8. بنية نظام الحاسوب</a></li>
+            <li><a href="#summary">الملخص</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Learning Objectives -->
+        <section id="objectives" class="learning-objectives">
+            <h2>أهداف التعلم</h2>
+            <p>بنهاية هذه الجلسة، ستكون قادراً على:</p>
+            <ul>
+                <li>شرح كيفية إدارة أنظمة التشغيل للملفات والتخزين الكتلي وأجهزة الإدخال/الإخراج</li>
+                <li>وصف دور التخزين المؤقت في تحسين أداء النظام</li>
+                <li>التمييز بين آليات الحماية والأمان في نظام التشغيل</li>
+                <li>فهم مفاهيم المحاكاة الافتراضية وأنواع المراقبين (Hypervisor)</li>
+                <li>مقارنة بنى أنظمة الحاسوب المختلفة (معالج واحد، SMP، NUMA، المجمعات)</li>
+                <li>وصف الأنظمة الموزعة وأنواع الشبكات</li>
+            </ul>
+        </section>
+
+        <!-- Section 1: File-System Management -->
+        <section id="file-system" class="content-section">
+            <h2>1. إدارة نظام الملفات</h2>
+
+            <div class="definition">
+                <h3>ما هو نظام الملفات؟</h3>
+                <p><strong>نظام الملفات</strong> يوفر الآلية لتنظيم وتخزين واسترجاع وإدارة البيانات على أجهزة التخزين. وهو من أكثر مكونات نظام التشغيل وضوحاً للمستخدم.</p>
+            </div>
+
+            <p>يوفر نظام التشغيل عرضاً منطقياً موحداً لتخزين المعلومات، مع تجريد الخصائص الفيزيائية لأجهزة التخزين إلى وحدة منطقية: <strong>الملف</strong>.</p>
+
+            <article class="os-component">
+                <h4>الملفات</h4>
+                <p><strong>الملف</strong> هو مجموعة مسماة من المعلومات المرتبطة المخزنة على التخزين الثانوي:</p>
+                <ul>
+                    <li><strong>ملفات نصية</strong> - تسلسلات من الأحرف منظمة في سطور</li>
+                    <li><strong>ملفات ثنائية</strong> - برامج، صور، محتوى وسائط متعددة</li>
+                    <li><strong>السمات</strong> - الاسم، النوع، الحجم، الصلاحيات، الطوابع الزمنية</li>
+                    <li><strong>العمليات</strong> - إنشاء، قراءة، كتابة، حذف، بحث، فتح، إغلاق</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>الأدلة (Directories)</h4>
+                <p><strong>الأدلة</strong> تنظم الملفات في هيكل هرمي:</p>
+                <ul>
+                    <li><strong>الدليل الجذر</strong> - الدليل الأعلى في التسلسل الهرمي</li>
+                    <li><strong>الأدلة الفرعية</strong> - أدلة داخل أدلة</li>
+                    <li><strong>المسار</strong> - الطريق من الجذر إلى ملف محدد (مثل <code>/home/user/document.txt</code>)</li>
+                </ul>
+            </article>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">هيكل شجرة الأدلة</h3>
+                </div>
+                <div class="directory-tree">
+                    <div class="tree-node root-node">
+                        <span class="node-label">/ (الجذر)</span>
+                    </div>
+                    <div class="tree-level">
+                        <div class="tree-branch">
+                            <div class="tree-node dir-node">
+                                <span class="node-label">home</span>
+                            </div>
+                            <div class="tree-children">
+                                <div class="tree-node file-node"><span class="node-label">user1</span></div>
+                                <div class="tree-node file-node"><span class="node-label">user2</span></div>
+                            </div>
+                        </div>
+                        <div class="tree-branch">
+                            <div class="tree-node dir-node">
+                                <span class="node-label">etc</span>
+                            </div>
+                            <div class="tree-children">
+                                <div class="tree-node file-node"><span class="node-label">config</span></div>
+                            </div>
+                        </div>
+                        <div class="tree-branch">
+                            <div class="tree-node dir-node">
+                                <span class="node-label">bin</span>
+                            </div>
+                            <div class="tree-children">
+                                <div class="tree-node file-node"><span class="node-label">programs</span></div>
+                            </div>
+                        </div>
+                        <div class="tree-branch">
+                            <div class="tree-node dir-node">
+                                <span class="node-label">var</span>
+                            </div>
+                            <div class="tree-children">
+                                <div class="tree-node file-node"><span class="node-label">logs</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">شجرة أدلة Unix/Linux نموذجية مع الجذر في الأعلى والأدلة الفرعية تتفرع للأسفل.</p>
+            </div>
+
+            <h3>أنشطة نظام التشغيل في إدارة الملفات</h3>
+            <p>نظام التشغيل مسؤول عن أنشطة إدارة نظام الملفات التالية:</p>
+            <ul>
+                <li><strong>إنشاء وحذف</strong> الملفات والأدلة</li>
+                <li><strong>تعيين</strong> الملفات على التخزين الثانوي</li>
+                <li><strong>دعم العمليات الأساسية</strong> للتعامل مع الملفات والأدلة</li>
+                <li><strong>النسخ الاحتياطي</strong> للملفات على وسائط تخزين مستقرة (غير متطايرة)</li>
+            </ul>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> نظام الملفات يخفي تعقيد أجهزة التخزين الفيزيائية، ويوفر للمستخدمين والبرامج واجهة بسيطة وموحدة لتخزين واسترجاع البيانات.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Mass-Storage Management -->
+        <section id="mass-storage" class="content-section">
+            <h2>2. إدارة التخزين الكتلي</h2>
+
+            <div class="definition">
+                <h3>لماذا إدارة التخزين الكتلي؟</h3>
+                <p>بما أن الذاكرة الرئيسية صغيرة جداً ومتطايرة لتخزين جميع البيانات بشكل دائم، يجب على نظام التشغيل إدارة <strong>التخزين الثانوي</strong> (الأقراص) بكفاءة. معظم البرامج تُخزن على القرص حتى يتم تحميلها في الذاكرة.</p>
+            </div>
+
+            <h3>أنشطة إدارة التخزين الكتلي</h3>
+            <article class="os-component">
+                <h4>إدارة القرص</h4>
+                <ul>
+                    <li><strong>تركيب وفصل</strong> أجهزة التخزين</li>
+                    <li><strong>إدارة المساحة الحرة</strong> - تتبع مساحة القرص المتاحة</li>
+                    <li><strong>تخصيص التخزين</strong> - تعيين كتل القرص للملفات</li>
+                    <li><strong>جدولة القرص</strong> - ترتيب طلبات القرص لتحقيق الكفاءة</li>
+                    <li><strong>التقسيم</strong> - تقسيم الأقراص إلى أقسام منطقية</li>
+                </ul>
+            </article>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مقارنة طرق تخصيص التخزين</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الطريقة</th>
+                            <th>النهج</th>
+                            <th>المزايا</th>
+                            <th>العيوب</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>المتجاور (Contiguous)</strong></td>
+                            <td>تُخزن الملفات في كتل متتالية</td>
+                            <td>وصول تسلسلي وعشوائي سريع</td>
+                            <td>تجزئة خارجية، يجب معرفة حجم الملف</td>
+                        </tr>
+                        <tr>
+                            <td><strong>المرتبط (Linked)</strong></td>
+                            <td>كل كتلة تشير إلى التالية</td>
+                            <td>لا تجزئة خارجية، نمو سهل</td>
+                            <td>وصول عشوائي بطيء، حمل المؤشرات</td>
+                        </tr>
+                        <tr>
+                            <td><strong>المفهرس (Indexed)</strong></td>
+                            <td>كتلة فهرس تحتوي جميع المؤشرات</td>
+                            <td>يدعم الوصول المباشر، لا تجزئة</td>
+                            <td>حمل كتلة الفهرس، حجم ملف محدود</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <article class="os-component">
+                <h4>التخزين الثلاثي</h4>
+                <p>بعد التخزين الأولي والثانوي، يوفر <strong>التخزين الثلاثي</strong> حلول الأرشفة:</p>
+                <ul>
+                    <li><strong>الأقراص الضوئية</strong> (CD، DVD، Blu-ray) - للقراءة فقط أو للقراءة والكتابة</li>
+                    <li><strong>الأشرطة المغناطيسية</strong> - سعة عالية، وصول تسلسلي، تُستخدم للنسخ الاحتياطي</li>
+                    <li><strong>التخزين السحابي</strong> - تخزين بعيد يُوصل عبر الشبكة</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>تأثير الأداء:</strong> سرعة النظام بأكمله تعتمد غالباً على مدى كفاءة إدارة نظام التشغيل لتخزين القرص، حيث أن إدخال/إخراج القرص هو أحد أكبر عوائق الأداء في الحوسبة.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Caching -->
+        <section id="caching" class="content-section">
+            <h2>3. التخزين المؤقت (Caching)</h2>
+
+            <div class="definition">
+                <h3>ما هو التخزين المؤقت؟</h3>
+                <p><strong>التخزين المؤقت</strong> هو تقنية نسخ البيانات المستخدمة بكثرة إلى وسيط تخزين أسرع. وهو مبدأ أساسي يُستخدم في كل مستوى من مستويات نظام الحاسوب لتحسين الأداء.</p>
+            </div>
+
+            <p>عند الحاجة لبيانات، يُفحص الذاكرة المخبئية أولاً. إذا وُجدت (<strong>إصابة الذاكرة المخبئية - cache hit</strong>)، تُستخدم البيانات مباشرة. إذا لم تُوجد (<strong>إخفاق الذاكرة المخبئية - cache miss</strong>)، تُجلب البيانات من المصدر الأبطأ وتُوضع نسخة في الذاكرة المخبئية للاستخدام المستقبلي.</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">تدفق التخزين المؤقت متعدد المستويات</h3>
+                </div>
+                <div class="caching-flow">
+                    <div class="cache-level-row">
+                        <div class="cache-box cache-l1">
+                            <span class="cache-name">ذاكرة L1</span>
+                            <span class="cache-detail">~1 نانوثانية | 32-64 KB</span>
+                        </div>
+                        <div class="cache-arrow">&#8592;</div>
+                        <div class="cache-box cache-l2">
+                            <span class="cache-name">ذاكرة L2</span>
+                            <span class="cache-detail">~4 نانوثانية | 256 KB-1 MB</span>
+                        </div>
+                        <div class="cache-arrow">&#8592;</div>
+                        <div class="cache-box cache-l3">
+                            <span class="cache-name">ذاكرة L3</span>
+                            <span class="cache-detail">~10 نانوثانية | 4-64 MB</span>
+                        </div>
+                    </div>
+                    <div class="cache-flow-down">&#8595;</div>
+                    <div class="cache-level-row">
+                        <div class="cache-box cache-ram">
+                            <span class="cache-name">الذاكرة الرئيسية (RAM)</span>
+                            <span class="cache-detail">~100 نانوثانية | 8-64 GB</span>
+                        </div>
+                        <div class="cache-arrow">&#8592;</div>
+                        <div class="cache-box cache-disk">
+                            <span class="cache-name">القرص (SSD/HDD)</span>
+                            <span class="cache-detail">~10 مايكروثانية - 10 مللي ثانية | TB</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">تتدفق البيانات عبر مستويات متعددة من الذاكرة المخبئية. كل إخفاق في مستوى أسرع يؤدي إلى جلب من المستوى الأبطأ التالي.</p>
+            </div>
+
+            <h3>مفاهيم التخزين المؤقت الأساسية</h3>
+
+            <article class="os-component">
+                <h4>إدارة الذاكرة المخبئية</h4>
+                <ul>
+                    <li><strong>حجم الذاكرة المخبئية</strong> - محدود؛ الاختيار الدقيق لما يُخزن مؤقتاً أمر حاسم</li>
+                    <li><strong>سياسة الاستبدال</strong> - تقرر أي بيانات مخبئية يتم إزالتها (مثل LRU، FIFO)</li>
+                    <li><strong>سياسة الكتابة</strong> - كتابة فورية (Write-through) مقابل كتابة مؤجلة (Write-back)</li>
+                    <li><strong>التماسك</strong> - ضمان تناسق جميع نسخ البيانات عبر الذاكرات المخبئية</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>التخزين المؤقت في الحوسبة اليومية</h4>
+                <ul>
+                    <li><strong>ذاكرة المعالج المخبئية</strong> - الأجهزة تخبئ التعليمات والبيانات قرب المعالج</li>
+                    <li><strong>ذاكرة القرص المخبئية</strong> - نظام التشغيل يخبئ كتل القرص المستخدمة بكثرة في RAM</li>
+                    <li><strong>ذاكرة الويب المخبئية</strong> - المتصفحات تخبئ صفحات الويب والصور محلياً</li>
+                    <li><strong>ذاكرة DNS المخبئية</strong> - نظام التشغيل يخبئ تحليلات أسماء النطاقات</li>
+                </ul>
+            </div>
+
+            <div class="key-message">
+                <p><strong>مهم:</strong> يقدم التخزين المؤقت <strong>مشكلة تماسك الذاكرة المخبئية</strong> في أنظمة المعالجات المتعددة. عندما تخبئ عدة معالجات نفس البيانات، يجب أن تنعكس تحديثات معالج واحد في جميع الذاكرات المخبئية الأخرى للحفاظ على التناسق.</p>
+            </div>
+        </section>
+
+        <!-- Section 4: I/O Subsystem -->
+        <section id="io-subsystem" class="content-section">
+            <h2>4. النظام الفرعي للإدخال/الإخراج</h2>
+
+            <div class="definition">
+                <h3>ما هو النظام الفرعي للإدخال/الإخراج؟</h3>
+                <p><strong>النظام الفرعي للإدخال/الإخراج</strong> يدير ويتحكم في جميع عمليات وأجهزة الإدخال/الإخراج. أحد أهدافه الرئيسية هو إخفاء خصوصيات أجهزة العتاد المحددة عن بقية نظام التشغيل.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مكدس طبقات نظام الإدخال/الإخراج</h3>
+                </div>
+                <div class="io-layer-stack">
+                    <div class="io-layer io-layer-app">
+                        <span class="io-layer-name">تطبيق المستخدم</span>
+                        <span class="io-layer-desc">يصدر طلبات I/O عبر استدعاءات النظام</span>
+                    </div>
+                    <div class="io-layer io-layer-kernel">
+                        <span class="io-layer-name">النظام الفرعي لـ I/O في النواة</span>
+                        <span class="io-layer-desc">الجدولة، التخزين المؤقت، التخبئة، الطباعة المؤجلة، معالجة الأخطاء</span>
+                    </div>
+                    <div class="io-layer io-layer-driver">
+                        <span class="io-layer-name">برامج تشغيل الأجهزة</span>
+                        <span class="io-layer-desc">كود خاص بالجهاز يتواصل مع العتاد</span>
+                    </div>
+                    <div class="io-layer io-layer-controller">
+                        <span class="io-layer-name">متحكمات الأجهزة</span>
+                        <span class="io-layer-desc">واجهة العتاد (المسجلات، المخازن المؤقتة)</span>
+                    </div>
+                    <div class="io-layer io-layer-device">
+                        <span class="io-layer-name">الأجهزة الفيزيائية</span>
+                        <span class="io-layer-desc">لوحة المفاتيح، القرص، الشبكة، الشاشة، إلخ.</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>خدمات I/O في النواة</h3>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مقارنة تقنيات الإدخال/الإخراج</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>التقنية</th>
+                            <th>الوصف</th>
+                            <th>مثال</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>التخزين المؤقت (Buffering)</strong></td>
+                            <td>تخزين البيانات مؤقتاً في الذاكرة أثناء النقل بين أجهزة ذات سرعات مختلفة</td>
+                            <td>بث الفيديو يخزن الإطارات مسبقاً قبل التشغيل</td>
+                        </tr>
+                        <tr>
+                            <td><strong>التخبئة (Caching)</strong></td>
+                            <td>الاحتفاظ بنسخة من البيانات المستخدمة بكثرة في ذاكرة أسرع</td>
+                            <td>تخبئة كتل القرص في RAM</td>
+                        </tr>
+                        <tr>
+                            <td><strong>الطباعة المؤجلة (Spooling)</strong></td>
+                            <td>تخزين المخرجات لجهاز لا يقبل تدفقات بيانات متداخلة</td>
+                            <td>مخزن الطباعة يصف المستندات للطابعة</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <article class="os-component">
+                <h4>برامج تشغيل الأجهزة (Device Drivers)</h4>
+                <p><strong>برامج تشغيل الأجهزة</strong> توفر واجهة موحدة للنظام الفرعي لـ I/O:</p>
+                <ul>
+                    <li>كل نوع جهاز له برنامج تشغيل خاص</li>
+                    <li>برامج التشغيل تغلف التفاصيل الخاصة بالجهاز</li>
+                    <li>تسمح لنظام التشغيل بالتعامل مع جميع الأجهزة عبر واجهة مشتركة</li>
+                    <li>يمكن تحميلها ديناميكياً (التوصيل والتشغيل)</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>مبدأ التصميم:</strong> النظام الفرعي لـ I/O يوفر واجهة مستقلة عن الأجهزة. يمكن للبرامج القراءة/الكتابة لأي جهاز باستخدام نفس استدعاءات النظام، بغض النظر عما إذا كان قرصاً أو بطاقة شبكة أو لوحة مفاتيح.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: Protection and Security -->
+        <section id="protection-security" class="content-section">
+            <h2>5. الحماية والأمان</h2>
+
+            <div class="definition">
+                <h3>الحماية مقابل الأمان</h3>
+                <p><strong>الحماية</strong> هي آلية داخلية: التحكم في وصول العمليات والمستخدمين لموارد النظام. <strong>الأمان</strong> هو الدفاع ضد الهجمات الخارجية والداخلية: الفيروسات، الديدان، هجمات حجب الخدمة، سرقة الهوية، إلخ.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">طبقات الأمان</h3>
+                </div>
+                <div class="security-layers">
+                    <div class="security-ring ring-outer">
+                        <span class="ring-label">الأمان الفيزيائي</span>
+                        <span class="ring-desc">مراكز البيانات، الأقفال، بطاقات الوصول</span>
+                        <div class="security-ring ring-middle">
+                            <span class="ring-label">أمان الشبكة</span>
+                            <span class="ring-desc">جدران الحماية، التشفير، VPN</span>
+                            <div class="security-ring ring-inner">
+                                <span class="ring-label">أمان نظام التشغيل</span>
+                                <span class="ring-desc">المصادقة، التحكم بالوصول</span>
+                                <div class="security-ring ring-core">
+                                    <span class="ring-label">التطبيق</span>
+                                    <span class="ring-desc">التحقق من المدخلات</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">يُنفذ الأمان في طبقات. يجب على الاختراق اجتياز طبقات متعددة للوصول إلى بيانات التطبيق الأساسية.</p>
+            </div>
+
+            <h3>آليات الحماية</h3>
+
+            <article class="os-component">
+                <h4>مصادقة المستخدم</h4>
+                <p>يجب على نظام التشغيل <strong>التمييز بين المستخدمين</strong> لتحديد من يمكنه فعل ماذا:</p>
+                <ul>
+                    <li><strong>معرّف المستخدم (UID)</strong> - معرّف فريد لكل مستخدم</li>
+                    <li><strong>معرّف المجموعة (GID)</strong> - يمكن للمستخدمين الانتماء لمجموعات للوصول المشترك</li>
+                    <li><strong>كلمات المرور وبيانات الاعتماد</strong> - التحقق من هوية المستخدم</li>
+                    <li><strong>تصعيد الصلاحيات</strong> - الحصول المؤقت على صلاحيات أعلى (مثل <code>sudo</code>)</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>التحكم بالوصول</h4>
+                <p>الملفات والموارد لها <strong>صلاحيات</strong> تتحكم في من يمكنه الوصول إليها:</p>
+                <ul>
+                    <li><strong>قراءة (r)</strong> - عرض محتويات الملف</li>
+                    <li><strong>كتابة (w)</strong> - تعديل محتويات الملف</li>
+                    <li><strong>تنفيذ (x)</strong> - تشغيل كبرنامج</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>مثال على صلاحيات ملفات Unix</h4>
+                <p>الأمر <code>ls -l</code> يعرض الصلاحيات بالتنسيق:</p>
+                <div class="permissions-example">
+                    <code class="perm-display" dir="ltr">-rwxr-xr-- 1 owner group 4096 Jan 1 file.txt</code>
+                    <div class="perm-breakdown">
+                        <div class="perm-group">
+                            <span class="perm-bits">rwx</span>
+                            <span class="perm-who">المالك</span>
+                        </div>
+                        <div class="perm-group">
+                            <span class="perm-bits">r-x</span>
+                            <span class="perm-who">المجموعة</span>
+                        </div>
+                        <div class="perm-group">
+                            <span class="perm-bits">r--</span>
+                            <span class="perm-who">الآخرون</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>الدفاع في العمق:</strong> يجب تنفيذ الأمان على مستويات متعددة - فيزيائي، بشري، نظام تشغيل، وشبكة. السلسلة قوية بقوة أضعف حلقاتها.</p>
+            </div>
+        </section>
+
+        <!-- Section 6: Virtualization -->
+        <section id="virtualization" class="content-section">
+            <h2>6. المحاكاة الافتراضية (Virtualization)</h2>
+
+            <div class="definition">
+                <h3>ما هي المحاكاة الافتراضية؟</h3>
+                <p><strong>المحاكاة الافتراضية</strong> هي تقنية تسمح لآلة فيزيائية واحدة بتشغيل عدة أنظمة تشغيل في وقت واحد. <strong>مدير الآلة الافتراضية (VMM)</strong> أو <strong>المراقب (Hypervisor)</strong> ينشئ ويدير الآلات الافتراضية (VMs)، كل منها بعتاد افتراضي خاص بها.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">بنية مدير الآلة الافتراضية (VMM)</h3>
+                </div>
+                <div class="vmm-architecture">
+                    <div class="vmm-vms">
+                        <div class="vm-box">
+                            <div class="vm-app">تطبيق أ</div>
+                            <div class="vm-os">نظام ضيف 1<br>(Windows)</div>
+                        </div>
+                        <div class="vm-box">
+                            <div class="vm-app">تطبيق ب</div>
+                            <div class="vm-os">نظام ضيف 2<br>(Linux)</div>
+                        </div>
+                        <div class="vm-box">
+                            <div class="vm-app">تطبيق ج</div>
+                            <div class="vm-os">نظام ضيف 3<br>(macOS)</div>
+                        </div>
+                    </div>
+                    <div class="vmm-layer">
+                        <span>مدير الآلة الافتراضية (Hypervisor)</span>
+                    </div>
+                    <div class="vmm-hardware">
+                        <span>العتاد الفيزيائي (المعالج، الذاكرة، القرص، الشبكة)</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>أنواع المراقبين (Hypervisors)</h3>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مقارنة المراقبين</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الميزة</th>
+                            <th>النوع 1 (Bare-Metal)</th>
+                            <th>النوع 2 (مستضاف)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>يعمل على</strong></td>
+                            <td>مباشرة على العتاد</td>
+                            <td>فوق نظام تشغيل مضيف</td>
+                        </tr>
+                        <tr>
+                            <td><strong>الأداء</strong></td>
+                            <td>أفضل (حمل أقل)</td>
+                            <td>أقل قليلاً (طبقة نظام إضافية)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>حالة الاستخدام</strong></td>
+                            <td>الخوادم، مراكز البيانات</td>
+                            <td>اختبار سطح المكتب، التطوير</td>
+                        </tr>
+                        <tr>
+                            <td><strong>أمثلة</strong></td>
+                            <td>VMware ESXi, Hyper-V, Xen</td>
+                            <td>VirtualBox, VMware Workstation</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>فوائد المحاكاة الافتراضية</h3>
+            <ul>
+                <li><strong>تجميع الخوادم</strong> - تشغيل عدة خوادم على آلة فيزيائية واحدة</li>
+                <li><strong>العزل</strong> - الآلات الافتراضية معزولة عن بعضها؛ انهيار واحدة لا يؤثر على الأخريات</li>
+                <li><strong>الاختبار والتطوير</strong> - تشغيل بيئات أنظمة تشغيل مختلفة في وقت واحد</li>
+                <li><strong>اللقطات والترحيل</strong> - حفظ حالة VM ونقلها بين المضيفات الفيزيائية</li>
+                <li><strong>الحوسبة السحابية</strong> - أساس البنية التحتية السحابية الحديثة</li>
+            </ul>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> المحاكاة الافتراضية هي أساس الحوسبة السحابية. خدمات مثل AWS وAzure وGoogle Cloud تستخدم المراقبين لتشغيل آلاف الآلات الافتراضية على بنية تحتية فيزيائية مشتركة.</p>
+            </div>
+        </section>
+
+        <!-- Section 7: Distributed Systems -->
+        <section id="distributed-systems" class="content-section">
+            <h2>7. الأنظمة الموزعة</h2>
+
+            <div class="definition">
+                <h3>ما هي الأنظمة الموزعة؟</h3>
+                <p><strong>النظام الموزع</strong> هو مجموعة من الحواسيب المنفصلة فيزيائياً والمتصلة بالشبكة التي تعمل معاً لتبدو كنظام متماسك واحد. تتواصل وتتنسق عبر <strong>شبكة</strong>.</p>
+            </div>
+
+            <h3>أنواع الشبكات</h3>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مقارنة أنواع الشبكات</h3>
+                </div>
+                <div class="network-grid">
+                    <div class="network-card network-pan">
+                        <h4>PAN</h4>
+                        <p class="network-full">شبكة المنطقة الشخصية</p>
+                        <p class="network-range">النطاق: ~1-10 أمتار</p>
+                        <p class="network-example">بلوتوث، اتصالات USB</p>
+                    </div>
+                    <div class="network-card network-lan">
+                        <h4>LAN</h4>
+                        <p class="network-full">شبكة المنطقة المحلية</p>
+                        <p class="network-range">النطاق: مبنى / حرم جامعي</p>
+                        <p class="network-example">إيثرنت، واي فاي</p>
+                    </div>
+                    <div class="network-card network-man">
+                        <h4>MAN</h4>
+                        <p class="network-full">شبكة المنطقة الحضرية</p>
+                        <p class="network-range">النطاق: مدينة / منطقة</p>
+                        <p class="network-example">شبكات التلفزيون الكابلي، واي فاي المدينة</p>
+                    </div>
+                    <div class="network-card network-wan">
+                        <h4>WAN</h4>
+                        <p class="network-full">شبكة المنطقة الواسعة</p>
+                        <p class="network-range">النطاق: دول / عالمي</p>
+                        <p class="network-example">الإنترنت، الخطوط المؤجرة</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>لماذا الأنظمة الموزعة؟</h3>
+            <ul>
+                <li><strong>مشاركة الموارد</strong> - مشاركة العتاد والبرمجيات والبيانات عبر الشبكة</li>
+                <li><strong>تسريع الحوسبة</strong> - توزيع المهام عبر آلات متعددة</li>
+                <li><strong>الموثوقية</strong> - إذا فشلت عقدة، يمكن للأخريات مواصلة العمل</li>
+                <li><strong>الاتصال</strong> - تمكين المستخدمين من تبادل المعلومات (البريد الإلكتروني، الرسائل)</li>
+            </ul>
+
+            <article class="os-component">
+                <h4>أنظمة تشغيل الشبكة مقابل أنظمة التشغيل الموزعة</h4>
+                <ul>
+                    <li><strong>نظام تشغيل الشبكة</strong> - المستخدمون يدركون وجود آلات متعددة؛ يجب الوصول صراحة للموارد البعيدة (مثل SSH، مشاركة الملفات)</li>
+                    <li><strong>نظام التشغيل الموزع</strong> - المستخدمون يرون نظاماً واحداً؛ الوصول للموارد شفاف (النظام يقرر أين ينفذ المهام)</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>الأهمية المعاصرة:</strong> خدمات الإنترنت اليوم (محركات البحث، وسائل التواصل الاجتماعي، البث) كلها مبنية على أنظمة موزعة، مع آلاف الحواسيب تعمل معاً بسلاسة.</p>
+            </div>
+        </section>
+
+        <!-- Section 8: Computer System Architecture -->
+        <section id="system-architecture" class="content-section">
+            <h2>8. بنية نظام الحاسوب</h2>
+
+            <p>يمكن تصنيف أنظمة الحاسوب حسب عدد وترتيب معالجاتها:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مقارنة البنى</h3>
+                </div>
+                <div class="architecture-grid">
+                    <div class="arch-card">
+                        <div class="arch-header arch-single">معالج واحد</div>
+                        <div class="arch-body">
+                            <p><strong>الوصف:</strong> معالج عام واحد بنواة معالجة واحدة</p>
+                            <p><strong>الخصائص:</strong></p>
+                            <ul>
+                                <li>أبسط بنية</li>
+                                <li>قد يحتوي معالجات خاصة (GPU، متحكم DMA)</li>
+                                <li>كان مهيمناً تاريخياً، نادر الآن</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-header arch-smp">SMP (المعالجة المتعددة المتماثلة)</div>
+                        <div class="arch-body">
+                            <p><strong>الوصف:</strong> معالجات متعددة متساوية القدرة تتشارك الذاكرة و I/O</p>
+                            <p><strong>الخصائص:</strong></p>
+                            <ul>
+                                <li>كل معالج يشغل أي عملية</li>
+                                <li>ناقل ذاكرة مشترك</li>
+                                <li>أكثر البنى الحديثة شيوعاً</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-header arch-numa">NUMA (الوصول غير المنتظم للذاكرة)</div>
+                        <div class="arch-body">
+                            <p><strong>الوصف:</strong> معالجات متعددة، كل منها بذاكرة محلية، متصلة بناقل مشترك</p>
+                            <p><strong>الخصائص:</strong></p>
+                            <ul>
+                                <li>وصول سريع للذاكرة المحلية</li>
+                                <li>وصول أبطأ للذاكرة البعيدة</li>
+                                <li>يتوسع أفضل من SMP</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-header arch-clustered">الأنظمة المجمعة (Clustered)</div>
+                        <div class="arch-body">
+                            <p><strong>الوصف:</strong> عدة أنظمة مستقلة (عقد) تعمل معاً</p>
+                            <p><strong>الخصائص:</strong></p>
+                            <ul>
+                                <li>توافر عالٍ وتحمل الأخطاء</li>
+                                <li>يمكن أن تكون غير متماثلة أو متماثلة</li>
+                                <li>تُستخدم في الخوادم والحواسيب الفائقة</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <article class="os-component">
+                <h4>المعالجات متعددة الأنوية</h4>
+                <p>تحتوي المعالجات الحديثة على <strong>أنوية متعددة</strong> على شريحة واحدة:</p>
+                <ul>
+                    <li>كل نواة هي وحدة معالجة كاملة</li>
+                    <li>الأنوية تتشارك ذاكرة مخبئية على الشريحة (عادة L2/L3)</li>
+                    <li>أكثر كفاءة في الطاقة من معالجات منفصلة متعددة</li>
+                    <li>الاتصال داخل الشريحة أسرع من بين الشرائح</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>أمثلة واقعية على البنى</h4>
+                <ul>
+                    <li><strong>حاسوبك المحمول/هاتفك</strong> - SMP متعدد الأنوية (4-16 نواة)</li>
+                    <li><strong>خادم</strong> - NUMA متعدد المقابس (2-8 مقابس، كل منها 32+ نواة)</li>
+                    <li><strong>مركز بيانات Google/Amazon</strong> - نظام مجمع بآلاف العقد</li>
+                    <li><strong>حاسوب فائق</strong> - مجمع ضخم بملايين الأنوية</li>
+                </ul>
+            </div>
+
+            <div class="key-message">
+                <p><strong>الاتجاه:</strong> الاتجاه في الحوسبة نحو المزيد من الأنوية والمزيد من التوازي. يجب على أنظمة التشغيل إدارة وجدولة العمل بكفاءة عبر العديد من المعالجات والأنوية.</p>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary" class="content-section summary">
+            <h2>الملخص والنقاط الرئيسية</h2>
+
+            <h3>ما تعلمناه</h3>
+            <ol>
+                <li><strong>إدارة نظام الملفات توفر التنظيم</strong> - نظام التشغيل يدير الملفات والأدلة، موفراً هيكلاً منطقياً فوق التخزين الفيزيائي</li>
+
+                <li><strong>إدارة التخزين الكتلي حاسمة</strong> - إدارة القرص الفعالة (التخصيص، الجدولة) تؤثر مباشرة على أداء النظام</li>
+
+                <li><strong>التخزين المؤقت يحسن الأداء في كل مستوى</strong> - من ذاكرات المعالج المخبئية إلى ذاكرات الويب المخبئية، تخزين البيانات المستخدمة بكثرة في تخزين أسرع هو تحسين عالمي</li>
+
+                <li><strong>النظام الفرعي لـ I/O يخفي تعقيد العتاد</strong> - البنية الطبقية مع برامج التشغيل توفر واجهة موحدة لجميع الأجهزة</li>
+
+                <li><strong>الحماية تتحكم بالوصول الداخلي</strong> - معرّفات المستخدمين والصلاحيات وقوائم التحكم بالوصول تحدد من يمكنه الوصول لأي موارد</li>
+
+                <li><strong>الأمان يدافع ضد الهجمات</strong> - طبقات متعددة من الدفاع تحمي النظام من التهديدات الخارجية والداخلية</li>
+
+                <li><strong>المحاكاة الافتراضية تمكن مشاركة الموارد</strong> - المراقبون يسمحون بنسخ متعددة من أنظمة التشغيل على آلة فيزيائية واحدة، مشكلين أساس الحوسبة السحابية</li>
+
+                <li><strong>بنى الأنظمة تتنوع في الحجم</strong> - من المعالجات المفردة إلى الأنظمة المجمعة، كل بنية لها مقايضات في الأداء والتكلفة والتعقيد</li>
+            </ol>
+
+            <div class="key-message">
+                <p><strong>نظرة للأمام:</strong> في الأسابيع القادمة، سنستكشف خوارزميات جدولة العمليات والاتصال بين العمليات وآليات المزامنة بالتفصيل.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <section id="image-credits">
+            <h2>الاعتمادات والإسنادات</h2>
+            <p class="credits-intro">جميع الرسوم البيانية في هذا المستند هي أعمال تعليمية أصلية تم إنشاؤها خصيصاً لهذا المقرر.</p>
+            <ul class="credits-list">
+                <li><strong>مخطط شجرة الأدلة:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>تدفق التخزين المؤقت متعدد المستويات:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مكدس طبقات I/O:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>طبقات الأمان:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>بنية VMM:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>شبكة أنواع الشبكات:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>مقارنة البنى:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+            </ul>
+            <p class="credits-intro" style="margin-top: 1rem;">
+                <strong>الرخصة:</strong> جميع الرسوم البيانية مرخصة تحت رخصة المشاع الإبداعي - نسب المصنف 4.0 دولي (CC BY 4.0).
+            </p>
+        </section>
+    </footer>
+
+    <style>
+        /* === DIRECTORY TREE === */
+        .directory-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .tree-node {
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            color: white;
+        }
+
+        .root-node {
+            background: #e74c3c;
+            font-size: 1.1em;
+        }
+
+        .dir-node {
+            background: #3498db;
+        }
+
+        .file-node {
+            background: #27ae60;
+            font-size: 0.85em;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .tree-level {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tree-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tree-children {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* === CACHING FLOW === */
+        .caching-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .cache-level-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cache-box {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            min-width: 140px;
+        }
+
+        .cache-name {
+            display: block;
+            font-size: 1em;
+        }
+
+        .cache-detail {
+            display: block;
+            font-size: 0.75em;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
+        .cache-l1 { background: #e74c3c; }
+        .cache-l2 { background: #f39c12; }
+        .cache-l3 { background: #e67e22; }
+        .cache-ram { background: #27ae60; }
+        .cache-disk { background: #2c3e50; }
+
+        .cache-arrow {
+            font-size: 1.5em;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .cache-flow-down {
+            font-size: 1.5em;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .cache-level-row {
+                flex-direction: column;
+            }
+            .cache-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* === I/O LAYER STACK === */
+        .io-layer-stack {
+            max-width: 500px;
+            margin: 0 auto;
+            border: 3px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .io-layer {
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .io-layer:last-child {
+            border-bottom: none;
+        }
+
+        .io-layer-name {
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .io-layer-desc {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+
+        .io-layer-app { background: #3498db; }
+        .io-layer-kernel { background: #2980b9; }
+        .io-layer-driver { background: #27ae60; }
+        .io-layer-controller { background: #f39c12; }
+        .io-layer-device { background: #e74c3c; }
+
+        /* === SECURITY LAYERS === */
+        .security-layers {
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .security-ring {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 1.2rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .ring-label {
+            font-weight: 700;
+            font-size: 0.95em;
+            display: block;
+        }
+
+        .ring-desc {
+            font-size: 0.75em;
+            opacity: 0.8;
+            display: block;
+            margin-bottom: 0.75rem;
+        }
+
+        .ring-outer {
+            background: #e8f5e9;
+            border: 3px solid #27ae60;
+            color: #1b5e20;
+        }
+
+        .ring-middle {
+            background: #e3f2fd;
+            border: 3px solid #3498db;
+            color: #0d47a1;
+        }
+
+        .ring-inner {
+            background: #fff3e0;
+            border: 3px solid #f39c12;
+            color: #e65100;
+        }
+
+        .ring-core {
+            background: #fce4ec;
+            border: 3px solid #e74c3c;
+            color: #b71c1c;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .security-ring {
+                padding: 0.8rem;
+            }
+            .ring-label {
+                font-size: 0.8em;
+            }
+            .ring-desc {
+                font-size: 0.65em;
+            }
+        }
+
+        /* === PERMISSIONS EXAMPLE === */
+        .permissions-example {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .perm-display {
+            display: block;
+            color: #2ecc71;
+            font-size: 1.05em;
+            margin-bottom: 1rem;
+            background: none;
+            padding: 0;
+        }
+
+        .perm-breakdown {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .perm-group {
+            text-align: center;
+        }
+
+        .perm-bits {
+            display: block;
+            color: #f39c12;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: none;
+            padding: 0;
+        }
+
+        .perm-who {
+            color: #bdc3c7;
+            font-size: 0.85em;
+        }
+
+        /* === VMM ARCHITECTURE === */
+        .vmm-architecture {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 3px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .vmm-vms {
+            display: flex;
+            gap: 0;
+        }
+
+        .vm-box {
+            flex: 1;
+            text-align: center;
+            border-left: 2px solid var(--primary-color);
+        }
+
+        .vm-box:last-child {
+            border-left: none;
+        }
+
+        .vm-app {
+            background: #3498db;
+            color: white;
+            padding: 0.75rem;
+            font-weight: 600;
+        }
+
+        .vm-os {
+            background: #27ae60;
+            color: white;
+            padding: 0.75rem;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        .vmm-layer {
+            background: #9b59b6;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            font-weight: 700;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        .vmm-hardware {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.9em;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        /* === NETWORK GRID === */
+        .network-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .network-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .network-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 3px solid;
+            text-align: center;
+        }
+
+        .network-card h4 {
+            margin-top: 0;
+            font-size: 1.4em;
+        }
+
+        .network-full {
+            font-weight: 600;
+            margin: 0.25rem 0;
+        }
+
+        .network-range {
+            font-size: 0.9em;
+            margin: 0.25rem 0;
+        }
+
+        .network-example {
+            font-size: 0.85em;
+            opacity: 0.7;
+            margin: 0.25rem 0;
+        }
+
+        .network-pan {
+            background: #fce4ec;
+            border-color: #e74c3c;
+            color: #b71c1c;
+        }
+
+        .network-lan {
+            background: #e3f2fd;
+            border-color: #3498db;
+            color: #0d47a1;
+        }
+
+        .network-man {
+            background: #fff3e0;
+            border-color: #f39c12;
+            color: #e65100;
+        }
+
+        .network-wan {
+            background: #e8f5e9;
+            border-color: #27ae60;
+            color: #1b5e20;
+        }
+
+        /* === ARCHITECTURE GRID === */
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .architecture-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .arch-card {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+        }
+
+        .arch-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 700;
+            text-align: center;
+            font-size: 1.05em;
+        }
+
+        .arch-single { background: #3498db; }
+        .arch-smp { background: #27ae60; }
+        .arch-numa { background: #9b59b6; }
+        .arch-clustered { background: #e74c3c; }
+
+        .arch-body {
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+
+        .arch-body p {
+            margin: 0.5rem 0;
+            font-size: 0.9em;
+        }
+
+        .arch-body ul {
+            margin: 0.5rem 0;
+            padding-right: 1.2rem;
+            font-size: 0.85em;
+        }
+    </style>
+</body>
+</html>

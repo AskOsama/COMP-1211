@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 2: Storage, OS Operations, and Process Management</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <a href="week2_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <header>
+        <h1>Storage, OS Operations, and Process Management</h1>
+        <p class="subtitle">Week 2: Understanding How Operating Systems Work</p>
+    </header>
+
+    <nav class="table-of-contents no-print">
+        <h2>Contents</h2>
+        <ul>
+            <li><a href="#objectives">Learning Objectives</a></li>
+            <li><a href="#storage-structure">1. Storage Structure</a></li>
+            <li><a href="#storage-definitions">2. Storage Definitions</a></li>
+            <li><a href="#storage-hierarchy">3. Storage Hierarchy</a></li>
+            <li><a href="#dma">4. Direct Memory Access (DMA)</a></li>
+            <li><a href="#os-operations">5. Operating System Operations</a></li>
+            <li><a href="#multiprogramming">6. Multiprogramming</a></li>
+            <li><a href="#multitasking">7. Multitasking (Timesharing)</a></li>
+            <li><a href="#memory-layout">8. Memory Layout</a></li>
+            <li><a href="#dual-mode">9. Dual-mode Operation</a></li>
+            <li><a href="#mode-transition">10. Mode Transition</a></li>
+            <li><a href="#process-management">11. Process Management</a></li>
+            <li><a href="#memory-management">12. Memory Management</a></li>
+            <li><a href="#summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Learning Objectives -->
+        <section id="objectives" class="learning-objectives">
+            <h2>Learning Objectives</h2>
+            <p>By the end of this session, you will be able to:</p>
+            <ul>
+                <li>Describe the different types of storage and their characteristics</li>
+                <li>Explain the storage hierarchy and the concept of caching</li>
+                <li>Understand Direct Memory Access (DMA) and its benefits</li>
+                <li>Describe basic operating system operations and how they work</li>
+                <li>Differentiate between multiprogramming and multitasking</li>
+            </ul>
+        </section>
+
+        <!-- Section 1: Storage Structure -->
+        <section id="storage-structure" class="content-section">
+            <h2>1. Storage Structure</h2>
+
+            <p>Computer systems need different types of storage to operate efficiently. The two main categories are:</p>
+
+            <article class="os-component">
+                <h4>Main Memory (RAM)</h4>
+                <p><strong>Random Access Memory</strong> is the primary storage that the CPU can access directly:</p>
+                <ul>
+                    <li><strong>Volatile</strong> - Contents are lost when power is turned off</li>
+                    <li><strong>Fast Access</strong> - Can be read/written quickly by CPU</li>
+                    <li><strong>Limited Size</strong> - Typically 8GB to 64GB in modern computers</li>
+                    <li><strong>Directly Addressable</strong> - CPU uses memory addresses to access data</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Secondary Storage</h4>
+                <p>Provides <strong>non-volatile</strong> storage for programs and data:</p>
+                <ul>
+                    <li><strong>Hard Disk Drives (HDD)</strong> - Magnetic storage, high capacity, slower</li>
+                    <li><strong>Solid State Drives (SSD)</strong> - Flash memory, faster than HDD</li>
+                    <li><strong>Non-volatile</strong> - Data persists even when power is off</li>
+                    <li><strong>Large Capacity</strong> - Can store terabytes of data</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> Programs must be loaded from secondary storage into main memory before they can be executed. The CPU cannot directly execute programs stored on disk.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Storage Definitions -->
+        <section id="storage-definitions" class="content-section">
+            <h2>2. Storage Definitions</h2>
+
+            <p>Understanding storage requires knowing the basic units of measurement:</p>
+
+            <div class="definition">
+                <h3>Basic Units</h3>
+                <p>A <strong>bit</strong> is the smallest unit of data (0 or 1). A <strong>byte</strong> is a group of 8 bits.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Storage Units Table</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Unit</th>
+                            <th>Symbol</th>
+                            <th>Size (Bytes)</th>
+                            <th>Approximate Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Kilobyte</strong></td>
+                            <td>KB</td>
+                            <td>2<sup>10</sup></td>
+                            <td>1,024 bytes (~1 thousand)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Megabyte</strong></td>
+                            <td>MB</td>
+                            <td>2<sup>20</sup></td>
+                            <td>1,048,576 bytes (~1 million)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gigabyte</strong></td>
+                            <td>GB</td>
+                            <td>2<sup>30</sup></td>
+                            <td>~1 billion bytes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Terabyte</strong></td>
+                            <td>TB</td>
+                            <td>2<sup>40</sup></td>
+                            <td>~1 trillion bytes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Petabyte</strong></td>
+                            <td>PB</td>
+                            <td>2<sup>50</sup></td>
+                            <td>~1 quadrillion bytes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="example">
+                <h4>Real-World Examples</h4>
+                <ul>
+                    <li><strong>1 KB</strong> - A short email or text document</li>
+                    <li><strong>1 MB</strong> - A high-quality photo or a minute of MP3 audio</li>
+                    <li><strong>1 GB</strong> - About 250 MP3 songs or a short HD video</li>
+                    <li><strong>1 TB</strong> - About 500 hours of HD video</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 3: Storage Hierarchy -->
+        <section id="storage-hierarchy" class="content-section">
+            <h2>3. Storage Hierarchy</h2>
+
+            <p>Storage devices are organized in a hierarchy based on <strong>speed</strong>, <strong>cost</strong>, and <strong>capacity</strong>:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Storage Hierarchy Pyramid</h3>
+                </div>
+                <div class="storage-pyramid">
+                    <div class="pyramid-level level-registers">
+                        <span class="level-name">Registers</span>
+                        <span class="level-info">Fastest, Most Expensive, Smallest</span>
+                    </div>
+                    <div class="pyramid-level level-cache">
+                        <span class="level-name">Cache (L1, L2, L3)</span>
+                        <span class="level-info">Very Fast, Expensive, Small (KB-MB)</span>
+                    </div>
+                    <div class="pyramid-level level-ram">
+                        <span class="level-name">Main Memory (RAM)</span>
+                        <span class="level-info">Fast, Moderate Cost, Medium (GB)</span>
+                    </div>
+                    <div class="pyramid-level level-ssd">
+                        <span class="level-name">Solid State Drive (SSD)</span>
+                        <span class="level-info">Moderate Speed, Lower Cost, Large (TB)</span>
+                    </div>
+                    <div class="pyramid-level level-hdd">
+                        <span class="level-name">Hard Disk Drive (HDD)</span>
+                        <span class="level-info">Slower, Cheapest, Largest (TB)</span>
+                    </div>
+                </div>
+                <p class="diagram-note">As we go down the pyramid: Speed decreases, Capacity increases, Cost per byte decreases</p>
+            </div>
+
+            <a href="../demos/storage_hierarchy_demo.html" class="demo-link">Launch Interactive Storage Hierarchy Demo</a>
+
+            <h3>Key Concepts</h3>
+
+            <article class="os-component">
+                <h4>Caching</h4>
+                <p><strong>Caching</strong> is the process of copying frequently accessed data to faster storage:</p>
+                <ul>
+                    <li>Data is copied from slower storage to faster storage</li>
+                    <li>When data is needed, faster storage is checked first</li>
+                    <li>Improves overall system performance significantly</li>
+                    <li>Used at multiple levels (CPU cache, disk cache, web cache)</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Volatility</h4>
+                <ul>
+                    <li><strong>Volatile Storage</strong> - Loses data when power is off (Registers, Cache, RAM)</li>
+                    <li><strong>Non-volatile Storage</strong> - Retains data without power (SSD, HDD)</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>Trade-off:</strong> There is always a trade-off between speed, cost, and capacity. Faster storage is more expensive and has less capacity. The hierarchy allows systems to balance these factors.</p>
+            </div>
+        </section>
+
+        <!-- Section 4: DMA -->
+        <section id="dma" class="content-section">
+            <h2>4. Direct Memory Access (DMA)</h2>
+
+            <div class="definition">
+                <h3>What is DMA?</h3>
+                <p><strong>Direct Memory Access</strong> is a feature that allows I/O devices to transfer data directly to/from memory without involving the CPU for each byte.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">DMA Data Transfer</h3>
+                </div>
+                <div class="dma-diagram">
+                    <div class="dma-components">
+                        <div class="dma-box cpu-box">CPU</div>
+                        <div class="dma-box memory-box">Memory</div>
+                        <div class="dma-box dma-controller-box">DMA Controller</div>
+                        <div class="dma-box device-box">I/O Device</div>
+                    </div>
+                    <div class="dma-flow">
+                        <div class="flow-step">1. CPU initiates transfer</div>
+                        <div class="flow-step">2. DMA controller handles data transfer</div>
+                        <div class="flow-step">3. CPU is free to do other work</div>
+                        <div class="flow-step">4. DMA interrupts CPU when done</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Benefits of DMA</h3>
+            <ul>
+                <li><strong>Frees the CPU</strong> - CPU can perform other tasks during data transfer</li>
+                <li><strong>High-speed I/O</strong> - Data moves at memory speed, not CPU instruction speed</li>
+                <li><strong>One interrupt per block</strong> - Instead of one interrupt per byte</li>
+                <li><strong>Efficient for large transfers</strong> - Essential for disk and network operations</li>
+            </ul>
+
+            <div class="example">
+                <h4>Without DMA vs With DMA</h4>
+                <p><strong>Without DMA:</strong> CPU must read each byte from device, store it in memory. For 1MB transfer at 1 byte per instruction = 1 million CPU cycles wasted.</p>
+                <p><strong>With DMA:</strong> CPU sets up transfer once, DMA controller handles the rest. CPU uses only a few cycles for setup and completion interrupt.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: OS Operations -->
+        <section id="os-operations" class="content-section">
+            <h2>5. Operating System Operations</h2>
+
+            <p>When a computer starts, several key operations occur:</p>
+
+            <article class="os-component">
+                <h4>Bootstrap Program</h4>
+                <p>The <strong>bootstrap program</strong> is the first code that runs when the computer powers on:</p>
+                <ul>
+                    <li>Stored in ROM or EEPROM (firmware)</li>
+                    <li>Initializes CPU registers, device controllers, and memory</li>
+                    <li>Locates and loads the OS kernel into memory</li>
+                    <li>Starts execution of the kernel</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>System Daemons</h4>
+                <p><strong>Daemons</strong> are background processes that start during boot and run continuously:</p>
+                <ul>
+                    <li>Provide system services (printing, networking, scheduling)</li>
+                    <li>Run outside the kernel but support system operations</li>
+                    <li>Examples: sshd (secure shell), httpd (web server), cron (scheduler)</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Interrupt-Driven Operation</h4>
+                <p>Modern operating systems are <strong>interrupt driven</strong>:</p>
+                <ul>
+                    <li><strong>Hardware interrupts</strong> - Generated by devices (keyboard, disk, network)</li>
+                    <li><strong>Software interrupts (Traps)</strong> - Generated by programs (system calls, errors)</li>
+                    <li>Interrupts signal the OS that an event needs attention</li>
+                    <li>Allows efficient handling of I/O and other events</li>
+                </ul>
+            </article>
+        </section>
+
+        <!-- Section 6: Multiprogramming -->
+        <section id="multiprogramming" class="content-section">
+            <h2>6. Multiprogramming</h2>
+
+            <div class="definition">
+                <h3>What is Multiprogramming?</h3>
+                <p><strong>Multiprogramming</strong> keeps multiple programs in memory simultaneously to increase CPU utilization. When one program waits for I/O, another can use the CPU.</p>
+            </div>
+
+            <h3>How It Works</h3>
+            <ol>
+                <li>Multiple jobs (programs) are loaded into memory</li>
+                <li>OS selects one job to start executing (job scheduling)</li>
+                <li>When the running job needs to wait (e.g., for I/O), OS switches to another job</li>
+                <li>This keeps the CPU busy, improving utilization</li>
+            </ol>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Multiprogramming: CPU Utilization</h3>
+                </div>
+                <div class="multiprogramming-diagram">
+                    <div class="mp-scenario">
+                        <h4>Single Program</h4>
+                        <div class="timeline-visual">
+                            <div class="time-block cpu-block">CPU</div>
+                            <div class="time-block wait-block">Wait</div>
+                            <div class="time-block cpu-block">CPU</div>
+                            <div class="time-block wait-block">Wait</div>
+                        </div>
+                        <p>CPU idle during I/O waits</p>
+                    </div>
+                    <div class="mp-scenario">
+                        <h4>Multiprogramming</h4>
+                        <div class="timeline-visual">
+                            <div class="time-block cpu-block">Job A</div>
+                            <div class="time-block cpu-block-alt">Job B</div>
+                            <div class="time-block cpu-block">Job A</div>
+                            <div class="time-block cpu-block-alt">Job C</div>
+                        </div>
+                        <p>CPU always busy with some job</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Goal:</strong> Maximize CPU utilization by ensuring there is always a job ready to run. This is especially important for batch systems where jobs are submitted and run without user interaction.</p>
+            </div>
+        </section>
+
+        <!-- Section 7: Multitasking -->
+        <section id="multitasking" class="content-section">
+            <h2>7. Multitasking (Timesharing)</h2>
+
+            <div class="definition">
+                <h3>What is Multitasking?</h3>
+                <p><strong>Multitasking</strong> (or <strong>timesharing</strong>) extends multiprogramming by rapidly switching the CPU between processes, giving each user the illusion of having their own dedicated computer.</p>
+            </div>
+
+            <h3>Key Concepts</h3>
+
+            <article class="os-component">
+                <h4>Process</h4>
+                <p>A <strong>process</strong> is a program in execution. It includes:</p>
+                <ul>
+                    <li>The program code</li>
+                    <li>Current activity (program counter, registers)</li>
+                    <li>Process stack (temporary data)</li>
+                    <li>Data section (global variables)</li>
+                    <li>Heap (dynamically allocated memory)</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>CPU Scheduling</h4>
+                <p>When multiple processes are ready to run, the OS must choose which one gets the CPU:</p>
+                <ul>
+                    <li><strong>Time quantum</strong> - Each process gets a small time slice</li>
+                    <li><strong>Context switch</strong> - Saving and restoring process state</li>
+                    <li><strong>Scheduling algorithms</strong> - Rules for selecting the next process</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Response Time</h4>
+                <p>Multitasking aims to provide <strong>reasonable response time</strong>:</p>
+                <ul>
+                    <li>Users expect quick responses to their input</li>
+                    <li>Time slices are typically 10-100 milliseconds</li>
+                    <li>Switching happens so fast users don't notice</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>Real-World Example</h4>
+                <p>When you have a web browser, music player, and word processor open simultaneously, multitasking allows all three to appear to run at the same time. The CPU rapidly switches between them, giving each a turn.</p>
+            </div>
+        </section>
+
+        <!-- Section 8: Memory Layout -->
+        <section id="memory-layout" class="content-section">
+            <h2>8. Memory Layout of a Multiprogrammed System</h2>
+
+            <p>In a multiprogrammed system, memory must be organized to hold multiple programs simultaneously:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Memory Layout Diagram</h3>
+                </div>
+                <div class="memory-layout-diagram">
+                    <div class="memory-section os-section">
+                        <span class="section-label">Operating System</span>
+                        <span class="section-detail">Kernel, drivers, system data</span>
+                    </div>
+                    <div class="memory-section process-section p1">
+                        <span class="section-label">Process 1</span>
+                        <span class="section-detail">Code + Data + Stack</span>
+                    </div>
+                    <div class="memory-section process-section p2">
+                        <span class="section-label">Process 2</span>
+                        <span class="section-detail">Code + Data + Stack</span>
+                    </div>
+                    <div class="memory-section process-section p3">
+                        <span class="section-label">Process 3</span>
+                        <span class="section-detail">Code + Data + Stack</span>
+                    </div>
+                    <div class="memory-section process-section p4">
+                        <span class="section-label">Process 4</span>
+                        <span class="section-detail">Code + Data + Stack</span>
+                    </div>
+                    <div class="memory-address-labels">
+                        <span>0x00000000</span>
+                        <span>High Address</span>
+                    </div>
+                </div>
+                <p class="diagram-note">Each process has its own protected memory space. The OS manages allocation and protection.</p>
+            </div>
+
+            <h3>Memory Management Requirements</h3>
+            <ul>
+                <li><strong>Allocation</strong> - Assigning memory to processes</li>
+                <li><strong>Protection</strong> - Preventing processes from accessing each other's memory</li>
+                <li><strong>Relocation</strong> - Allowing programs to run at different addresses</li>
+                <li><strong>Sharing</strong> - Allowing processes to share code (e.g., libraries)</li>
+            </ul>
+        </section>
+
+        <!-- Section 9: Dual-mode Operation -->
+        <section id="dual-mode" class="content-section">
+            <h2>9. Dual-mode Operation</h2>
+
+            <div class="definition">
+                <h3>Why Dual-mode?</h3>
+                <p>Operating systems use <strong>dual-mode operation</strong> to protect the system from errant or malicious user programs. The hardware distinguishes between <strong>user mode</strong> and <strong>kernel mode</strong>.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">User Mode vs Kernel Mode</h3>
+                </div>
+                <div class="dual-mode-comparison">
+                    <div class="mode-box user-mode-box">
+                        <h4>User Mode</h4>
+                        <p><strong>Mode bit = 1</strong></p>
+                        <ul>
+                            <li>Limited access to hardware</li>
+                            <li>Cannot execute privileged instructions</li>
+                            <li>Memory access is restricted</li>
+                            <li>Where user applications run</li>
+                        </ul>
+                    </div>
+                    <div class="mode-box kernel-mode-box">
+                        <h4>Kernel Mode</h4>
+                        <p><strong>Mode bit = 0</strong></p>
+                        <ul>
+                            <li>Full access to hardware</li>
+                            <li>Can execute all instructions</li>
+                            <li>Unrestricted memory access</li>
+                            <li>Where the OS kernel runs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Privileged Instructions</h3>
+            <p>Some instructions can only be executed in kernel mode:</p>
+            <ul>
+                <li>I/O instructions (reading/writing to devices)</li>
+                <li>Memory management instructions</li>
+                <li>Interrupt management instructions</li>
+                <li>Instructions that modify the mode bit</li>
+            </ul>
+
+            <div class="key-message">
+                <p><strong>Protection Mechanism:</strong> If a user program tries to execute a privileged instruction while in user mode, the hardware generates a trap (exception), and the OS can terminate the offending program.</p>
+            </div>
+        </section>
+
+        <!-- Section 10: Mode Transition -->
+        <section id="mode-transition" class="content-section">
+            <h2>10. Mode Transition</h2>
+
+            <p>The system transitions between user mode and kernel mode through specific mechanisms:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Mode Transition Flow</h3>
+                </div>
+                <div class="mode-transition-diagram">
+                    <div class="transition-flow">
+                        <div class="mode-state user-state">
+                            <span class="state-label">User Mode</span>
+                            <span class="state-desc">Application executing</span>
+                        </div>
+                        <div class="transition-arrow">
+                            <span class="arrow-label">System Call / Trap / Interrupt</span>
+                            <span class="arrow-icon">→</span>
+                        </div>
+                        <div class="mode-state kernel-state">
+                            <span class="state-label">Kernel Mode</span>
+                            <span class="state-desc">OS handling request</span>
+                        </div>
+                        <div class="transition-arrow return-arrow">
+                            <span class="arrow-icon">←</span>
+                            <span class="arrow-label">Return from system call</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="../demos/mode_transition_demo.html" class="demo-link">Launch Interactive Mode Transition Demo</a>
+
+            <h3>Transition Mechanisms</h3>
+
+            <article class="os-component">
+                <h4>System Calls</h4>
+                <p>User programs request OS services via <strong>system calls</strong>:</p>
+                <ul>
+                    <li>Program executes a special trap instruction</li>
+                    <li>Hardware switches to kernel mode</li>
+                    <li>OS performs the requested service</li>
+                    <li>Control returns to user program in user mode</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Interrupts and Traps</h4>
+                <ul>
+                    <li><strong>Interrupt</strong> - External event (hardware signal)</li>
+                    <li><strong>Trap</strong> - Internal event (software-generated, e.g., system call or error)</li>
+                    <li>Both cause transition from user mode to kernel mode</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>Example: Opening a File</h4>
+                <ol>
+                    <li>User program calls <code>open("file.txt")</code> - User Mode</li>
+                    <li>System call trap occurs → switch to Kernel Mode</li>
+                    <li>OS validates request, accesses file system</li>
+                    <li>OS returns file handle → switch back to User Mode</li>
+                    <li>Program continues with the file handle</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Section 11: Process Management -->
+        <section id="process-management" class="content-section">
+            <h2>11. Process Management</h2>
+
+            <div class="definition">
+                <h3>What is a Process?</h3>
+                <p>A <strong>process</strong> is a program in execution. It is the unit of work in a modern computer system.</p>
+            </div>
+
+            <h3>Process vs Program</h3>
+            <ul>
+                <li><strong>Program</strong> - Passive entity stored on disk (executable file)</li>
+                <li><strong>Process</strong> - Active entity with a program counter and resources</li>
+                <li>One program can create multiple processes (e.g., multiple browser tabs)</li>
+            </ul>
+
+            <h3>Process Resources</h3>
+            <p>A process needs various resources to accomplish its task:</p>
+            <ul>
+                <li><strong>CPU time</strong> - To execute instructions</li>
+                <li><strong>Memory</strong> - For code, data, and stack</li>
+                <li><strong>Files</strong> - For input/output operations</li>
+                <li><strong>I/O devices</strong> - For communication with peripherals</li>
+            </ul>
+
+            <h3>OS Process Management Activities</h3>
+            <p>The operating system is responsible for:</p>
+            <ul>
+                <li><strong>Creating and deleting</strong> processes (user and system)</li>
+                <li><strong>Scheduling</strong> processes on the CPU</li>
+                <li><strong>Suspending and resuming</strong> processes</li>
+                <li><strong>Providing mechanisms</strong> for process synchronization</li>
+                <li><strong>Providing mechanisms</strong> for process communication</li>
+                <li><strong>Handling deadlocks</strong> between processes</li>
+            </ul>
+
+            <div class="key-message">
+                <p><strong>Single-threaded vs Multi-threaded:</strong> A single-threaded process has one program counter. A multi-threaded process has multiple program counters, allowing multiple locations in the code to be executed simultaneously.</p>
+            </div>
+        </section>
+
+        <!-- Section 12: Memory Management -->
+        <section id="memory-management" class="content-section">
+            <h2>12. Memory Management</h2>
+
+            <p>Memory management is a critical function of the operating system:</p>
+
+            <h3>Why Memory Management?</h3>
+            <ul>
+                <li>All instructions and data must be in memory for execution</li>
+                <li>Multiple processes compete for limited memory</li>
+                <li>CPU can only directly access main memory and registers</li>
+                <li>Efficient memory use improves system performance</li>
+            </ul>
+
+            <h3>Memory Management Activities</h3>
+            <p>The operating system is responsible for:</p>
+
+            <article class="os-component">
+                <h4>Tracking Memory Usage</h4>
+                <ul>
+                    <li>Keeping track of which parts of memory are in use</li>
+                    <li>Knowing which processes own which memory regions</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Allocation and Deallocation</h4>
+                <ul>
+                    <li>Deciding which processes get memory and how much</li>
+                    <li>Allocating memory when processes need it</li>
+                    <li>Freeing memory when processes terminate or release it</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Moving Data</h4>
+                <ul>
+                    <li>Moving data between main memory and disk</li>
+                    <li>Implementing virtual memory (using disk as extended memory)</li>
+                    <li>Swapping processes in and out of memory</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>Virtual Memory:</strong> Allows programs to use more memory than physically available by using disk space as an extension of RAM. This enables running large programs and more processes simultaneously.</p>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary" class="content-section summary">
+            <h2>Summary and Key Takeaways</h2>
+
+            <h3>What We've Learned</h3>
+            <ol>
+                <li><strong>Storage is hierarchical</strong> - From fast, expensive registers to slow, cheap disk drives, with caching to optimize access</li>
+
+                <li><strong>DMA enables efficient I/O</strong> - Allows data transfer without constant CPU involvement, freeing the CPU for other work</li>
+
+                <li><strong>OS operations are interrupt-driven</strong> - Hardware and software interrupts allow efficient event handling</li>
+
+                <li><strong>Multiprogramming maximizes CPU utilization</strong> - By keeping multiple programs in memory and switching when one waits for I/O</li>
+
+                <li><strong>Multitasking provides interactivity</strong> - Rapid CPU switching gives users the illusion of simultaneous execution</li>
+
+                <li><strong>Dual-mode operation provides protection</strong> - User mode restricts access, kernel mode has full privileges</li>
+
+                <li><strong>Mode transitions occur via system calls and interrupts</strong> - Programs request OS services through controlled interfaces</li>
+
+                <li><strong>Process management handles program execution</strong> - Creating, scheduling, and managing process resources</li>
+
+                <li><strong>Memory management is essential</strong> - Tracking, allocating, and managing memory for all processes</li>
+            </ol>
+
+            <div class="key-message">
+                <p><strong>Looking Ahead:</strong> In Week 3, we'll dive deeper into process management - exploring process states, the Process Control Block (PCB), and scheduling algorithms in detail.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <section id="image-credits">
+            <h2>Credits and Attributions</h2>
+            <p class="credits-intro">All diagrams in this document are original educational works created specifically for this course.</p>
+            <ul class="credits-list">
+                <li><strong>Storage Hierarchy Pyramid:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>DMA Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Multiprogramming Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Memory Layout Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Dual-mode Comparison:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Mode Transition Flow:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+            </ul>
+            <p class="credits-intro" style="margin-top: 1rem;">
+                <strong>License:</strong> All diagrams are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+            </p>
+        </section>
+    </footer>
+
+    <style>
+        /* === STORAGE PYRAMID === */
+        .storage-pyramid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pyramid-level {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            border: 2px solid var(--primary-color);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .pyramid-level:hover {
+            transform: scale(1.02);
+        }
+
+        .level-registers {
+            background: #e74c3c;
+            width: 40%;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .level-cache {
+            background: #f39c12;
+            width: 55%;
+        }
+
+        .level-ram {
+            background: #27ae60;
+            width: 70%;
+        }
+
+        .level-ssd {
+            background: #3498db;
+            width: 85%;
+        }
+
+        .level-hdd {
+            background: #2c3e50;
+            width: 100%;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .level-name {
+            font-size: 1em;
+        }
+
+        .level-info {
+            font-size: 0.75em;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .pyramid-level {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            .level-registers { width: 60%; }
+            .level-cache { width: 70%; }
+            .level-ram { width: 80%; }
+            .level-ssd { width: 90%; }
+            .level-hdd { width: 100%; }
+        }
+
+        /* === DMA DIAGRAM === */
+        .dma-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        .dma-components {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .dma-box {
+            padding: 1.5rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            color: white;
+            min-width: 120px;
+        }
+
+        .cpu-box { background: #e74c3c; }
+        .memory-box { background: #27ae60; }
+        .dma-controller-box { background: #9b59b6; }
+        .device-box { background: #3498db; }
+
+        .dma-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .flow-step {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--secondary-color);
+            font-size: 0.9em;
+        }
+
+        /* === MULTIPROGRAMMING DIAGRAM === */
+        .multiprogramming-diagram {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .multiprogramming-diagram {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mp-scenario {
+            text-align: center;
+        }
+
+        .mp-scenario h4 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .timeline-visual {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .time-block {
+            flex: 1;
+            padding: 0.75rem;
+            color: white;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .cpu-block { background: #27ae60; }
+        .cpu-block-alt { background: #3498db; }
+        .wait-block { background: #95a5a6; }
+
+        /* === MEMORY LAYOUT DIAGRAM === */
+        .memory-layout-diagram {
+            max-width: 400px;
+            margin: 0 auto;
+            border: 3px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .memory-section {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .memory-section:last-of-type {
+            border-bottom: none;
+        }
+
+        .os-section {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .process-section {
+            color: white;
+        }
+
+        .p1 { background: #3498db; }
+        .p2 { background: #27ae60; }
+        .p3 { background: #9b59b6; }
+        .p4 { background: #f39c12; }
+
+        .section-label {
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .section-detail {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .memory-address-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            background: var(--light-gray);
+            font-size: 0.8em;
+            color: #666;
+            font-family: monospace;
+        }
+
+        /* === DUAL MODE COMPARISON === */
+        .dual-mode-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: var(--spacing-lg) 0;
+        }
+
+        @media (max-width: 768px) {
+            .dual-mode-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mode-box {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 3px solid;
+        }
+
+        .user-mode-box {
+            background: #fff5f5;
+            border-color: #e74c3c;
+        }
+
+        .user-mode-box h4 {
+            color: #e74c3c;
+        }
+
+        .kernel-mode-box {
+            background: #f0fff4;
+            border-color: #27ae60;
+        }
+
+        .kernel-mode-box h4 {
+            color: #27ae60;
+        }
+
+        .mode-box h4 {
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+
+        .mode-box ul {
+            margin-bottom: 0;
+        }
+
+        /* === MODE TRANSITION DIAGRAM === */
+        .mode-transition-diagram {
+            padding: 2rem;
+        }
+
+        .transition-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .mode-state {
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .user-state {
+            background: #fff5f5;
+            border: 3px solid #e74c3c;
+        }
+
+        .kernel-state {
+            background: #f0fff4;
+            border: 3px solid #27ae60;
+        }
+
+        .state-label {
+            display: block;
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 0.25rem;
+        }
+
+        .state-desc {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .transition-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .arrow-icon {
+            font-size: 2em;
+            color: var(--secondary-color);
+        }
+
+        .arrow-label {
+            font-size: 0.8em;
+            color: #666;
+            text-align: center;
+            max-width: 120px;
+        }
+
+        .return-arrow {
+            order: -1;
+        }
+
+        @media (max-width: 768px) {
+            .transition-flow {
+                flex-direction: column;
+            }
+            .return-arrow {
+                order: 0;
+            }
+            .arrow-icon {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</body>
+</html>

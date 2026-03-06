@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boot Sequence Demo | Operating Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --terminal-bg: #0a0a0a;
+            --terminal-green: #00ff00;
+            --terminal-yellow: #ffff00;
+            --terminal-red: #ff4444;
+            --terminal-cyan: #00ffff;
+            --terminal-white: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: white;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1em;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Terminal */
+        .terminal-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+        }
+
+        .terminal-header {
+            background: #333;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .terminal-body {
+            background: var(--terminal-bg);
+            padding: 1.5rem;
+            min-height: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .boot-line {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            margin-bottom: 0.3rem;
+        }
+
+        .boot-line.visible {
+            opacity: 1;
+        }
+
+        .text-green { color: var(--terminal-green); }
+        .text-yellow { color: var(--terminal-yellow); }
+        .text-red { color: var(--terminal-red); }
+        .text-cyan { color: var(--terminal-cyan); }
+        .text-white { color: var(--terminal-white); }
+        .text-gray { color: #666; }
+
+        .status-ok {
+            color: var(--terminal-green);
+            float: right;
+        }
+
+        .status-fail {
+            color: var(--terminal-red);
+            float: right;
+        }
+
+        .status-loading {
+            color: var(--terminal-yellow);
+            float: right;
+        }
+
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .progress-bar {
+            display: inline-block;
+            width: 200px;
+            height: 12px;
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--terminal-green);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #219a52;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #34495e;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #2c3e50;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-panel h3 {
+            margin-bottom: 1rem;
+            color: #3498db;
+        }
+
+        .phase-indicator {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .phase-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .phase-item.active {
+            border-color: #f39c12;
+            background: rgba(243, 156, 18, 0.2);
+        }
+
+        .phase-item.complete {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.2);
+        }
+
+        .phase-number {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .phase-name {
+            font-size: 0.85em;
+            color: #aaa;
+        }
+
+        /* Explanation */
+        .explanation {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .explanation h4 {
+            margin-bottom: 0.5rem;
+            color: #3498db;
+        }
+
+        .explanation p {
+            color: #ddd;
+            line-height: 1.6;
+        }
+
+        /* Speed selector */
+        .speed-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            color: #aaa;
+        }
+
+        .speed-selector select {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background: #34495e;
+            color: white;
+            border: none;
+            font-size: 1em;
+        }
+
+        /* ASCII Art */
+        .ascii-art {
+            font-family: monospace;
+            white-space: pre;
+            color: var(--terminal-cyan);
+            font-size: 0.7em;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .terminal-body {
+                font-size: 0.75em;
+                min-height: 300px;
+            }
+
+            .ascii-art {
+                font-size: 0.5em;
+            }
+
+            .phase-indicator {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../weeks/week1.html#bootstrap" class="back-link">&larr; Back to Week 1</a>
+
+        <header>
+            <h1>Boot Sequence Simulation</h1>
+            <p class="subtitle">Experience the computer startup process step by step</p>
+        </header>
+
+        <!-- Phase Indicator -->
+        <div class="info-panel">
+            <h3>Boot Phases</h3>
+            <div class="phase-indicator">
+                <div class="phase-item" id="phase-1">
+                    <div class="phase-number">1</div>
+                    <div class="phase-name">Power On</div>
+                </div>
+                <div class="phase-item" id="phase-2">
+                    <div class="phase-number">2</div>
+                    <div class="phase-name">BIOS/UEFI</div>
+                </div>
+                <div class="phase-item" id="phase-3">
+                    <div class="phase-number">3</div>
+                    <div class="phase-name">POST</div>
+                </div>
+                <div class="phase-item" id="phase-4">
+                    <div class="phase-number">4</div>
+                    <div class="phase-name">Boot Device</div>
+                </div>
+                <div class="phase-item" id="phase-5">
+                    <div class="phase-number">5</div>
+                    <div class="phase-name">Boot Loader</div>
+                </div>
+                <div class="phase-item" id="phase-6">
+                    <div class="phase-number">6</div>
+                    <div class="phase-name">Kernel</div>
+                </div>
+                <div class="phase-item" id="phase-7">
+                    <div class="phase-number">7</div>
+                    <div class="phase-name">Init</div>
+                </div>
+                <div class="phase-item" id="phase-8">
+                    <div class="phase-number">8</div>
+                    <div class="phase-name">Ready</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal -->
+        <div class="terminal-container">
+            <div class="terminal-header">
+                <div class="terminal-dot dot-red"></div>
+                <div class="terminal-dot dot-yellow"></div>
+                <div class="terminal-dot dot-green"></div>
+                <span class="terminal-title">system-boot</span>
+            </div>
+            <div class="terminal-body" id="terminal">
+                <div class="boot-line visible text-gray">System powered off. Press "Start Boot" to begin.</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="speed-selector">
+            <label for="bootSpeed">Boot Speed:</label>
+            <select id="bootSpeed">
+                <option value="slow">Slow (Educational)</option>
+                <option value="normal" selected>Normal</option>
+                <option value="fast">Fast</option>
+            </select>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="startBoot()">
+                Start Boot
+            </button>
+            <button class="btn btn-secondary" id="resetBtn" onclick="resetBoot()">
+                Power Off
+            </button>
+        </div>
+
+        <!-- Explanation -->
+        <div class="explanation">
+            <h4>Understanding the Boot Process</h4>
+            <p>
+                When you press the power button, the CPU starts executing code from a fixed memory address (reset vector).
+                This code is stored in ROM/firmware (BIOS or UEFI). The firmware performs hardware diagnostics (POST),
+                locates a bootable device, loads the boot loader, which then loads the operating system kernel.
+                Finally, the kernel initializes drivers and system services, preparing the computer for use.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const speedSelector = document.getElementById('bootSpeed');
+
+        let isBooting = false;
+        let currentPhase = 0;
+
+        const bootSequence = [
+            // Phase 1: Power On
+            { phase: 1, lines: [
+                { text: '', clear: true },
+                { text: `
+ ██████╗  ██████╗ ██╗    ██╗███████╗██████╗      ██████╗ ███╗   ██╗
+ ██╔══██╗██╔═══██╗██║    ██║██╔════╝██╔══██╗    ██╔═══██╗████╗  ██║
+ ██████╔╝██║   ██║██║ █╗ ██║█████╗  ██████╔╝    ██║   ██║██╔██╗ ██║
+ ██╔═══╝ ██║   ██║██║███╗██║██╔══╝  ██╔══██╗    ██║   ██║██║╚██╗██║
+ ██║     ╚██████╔╝╚███╔███╔╝███████╗██║  ██║    ╚██████╔╝██║ ╚████║
+ ╚═╝      ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝     ╚═════╝ ╚═╝  ╚═══╝
+`, class: 'ascii-art', pre: true },
+                { text: 'CPU reset vector activated...', class: 'text-yellow' },
+                { text: 'Jumping to firmware entry point...', class: 'text-white' }
+            ]},
+
+            // Phase 2: BIOS/UEFI
+            { phase: 2, lines: [
+                { text: '', class: 'text-white' },
+                { text: '═══════════════════════════════════════════════════════', class: 'text-cyan' },
+                { text: '        UEFI BIOS - Educational System v2.0', class: 'text-cyan' },
+                { text: '        Copyright (c) 2026 OS Course Demo', class: 'text-cyan' },
+                { text: '═══════════════════════════════════════════════════════', class: 'text-cyan' },
+                { text: '', class: 'text-white' },
+                { text: 'Loading UEFI firmware from ROM...', class: 'text-white' },
+                { text: 'Firmware loaded successfully.', class: 'text-green', status: 'OK' }
+            ]},
+
+            // Phase 3: POST
+            { phase: 3, lines: [
+                { text: '', class: 'text-white' },
+                { text: '[ POST - Power-On Self Test ]', class: 'text-yellow' },
+                { text: '', class: 'text-white' },
+                { text: 'Testing CPU...', class: 'text-white', status: 'OK', delay: 400 },
+                { text: 'Detecting memory...', class: 'text-white', delay: 300 },
+                { text: '  Found: 16384 MB DDR4 @ 3200 MHz', class: 'text-gray' },
+                { text: 'Testing memory...', class: 'text-white', status: 'OK', delay: 500 },
+                { text: 'Initializing chipset...', class: 'text-white', status: 'OK', delay: 200 },
+                { text: 'Detecting storage controllers...', class: 'text-white', status: 'OK', delay: 300 },
+                { text: '  SATA Controller: 2 devices', class: 'text-gray' },
+                { text: '  NVMe Controller: 1 device', class: 'text-gray' },
+                { text: 'Initializing USB controllers...', class: 'text-white', status: 'OK', delay: 200 },
+                { text: 'Initializing graphics...', class: 'text-white', status: 'OK', delay: 200 },
+                { text: '', class: 'text-white' },
+                { text: 'POST completed successfully.', class: 'text-green' }
+            ]},
+
+            // Phase 4: Boot Device
+            { phase: 4, lines: [
+                { text: '', class: 'text-white' },
+                { text: '[ Scanning Boot Devices ]', class: 'text-yellow' },
+                { text: '', class: 'text-white' },
+                { text: 'Scanning for bootable devices...', class: 'text-white', delay: 400 },
+                { text: '  [1] NVMe SSD: Samsung 970 EVO (500GB)', class: 'text-gray' },
+                { text: '  [2] SATA HDD: Western Digital (1TB)', class: 'text-gray' },
+                { text: '  [3] USB: Not detected', class: 'text-gray' },
+                { text: '', class: 'text-white' },
+                { text: 'Boot priority: NVMe > SATA > USB', class: 'text-white' },
+                { text: 'Selected boot device: NVMe SSD', class: 'text-green' },
+                { text: 'Reading boot sector...', class: 'text-white', status: 'OK', delay: 300 }
+            ]},
+
+            // Phase 5: Boot Loader
+            { phase: 5, lines: [
+                { text: '', class: 'text-white' },
+                { text: '[ GRUB 2.06 - Boot Loader ]', class: 'text-yellow' },
+                { text: '', class: 'text-white' },
+                { text: 'Loading boot loader from MBR/GPT...', class: 'text-white', delay: 300 },
+                { text: 'Boot loader initialized.', class: 'text-green' },
+                { text: '', class: 'text-white' },
+                { text: 'Available boot options:', class: 'text-white' },
+                { text: '  > Educational OS (default)', class: 'text-cyan' },
+                { text: '    Recovery Mode', class: 'text-gray' },
+                { text: '    Memory Test', class: 'text-gray' },
+                { text: '', class: 'text-white' },
+                { text: 'Auto-selecting default in 3 seconds...', class: 'text-white', delay: 500 },
+                { text: 'Loading kernel image...', class: 'text-white', progress: true, delay: 800 }
+            ]},
+
+            // Phase 6: Kernel
+            { phase: 6, lines: [
+                { text: '', class: 'text-white' },
+                { text: '[ Kernel Initialization ]', class: 'text-yellow' },
+                { text: '', class: 'text-white' },
+                { text: 'Linux kernel 6.2.0-edu loading...', class: 'text-white', delay: 200 },
+                { text: 'Decompressing kernel image...', class: 'text-white', status: 'OK', delay: 400 },
+                { text: 'Setting up CPU features...', class: 'text-white', status: 'OK', delay: 200 },
+                { text: 'Initializing memory management...', class: 'text-white', status: 'OK', delay: 300 },
+                { text: 'Setting up page tables...', class: 'text-white', status: 'OK', delay: 200 },
+                { text: 'Initializing interrupt handlers...', class: 'text-white', status: 'OK', delay: 200 },
+                { text: 'Loading device drivers...', class: 'text-white', delay: 100 },
+                { text: '  [drv] ACPI driver loaded', class: 'text-gray' },
+                { text: '  [drv] PCI bus driver loaded', class: 'text-gray' },
+                { text: '  [drv] Storage driver loaded', class: 'text-gray' },
+                { text: '  [drv] Network driver loaded', class: 'text-gray' },
+                { text: '  [drv] Graphics driver loaded', class: 'text-gray' },
+                { text: 'Mounting root filesystem...', class: 'text-white', status: 'OK', delay: 300 },
+                { text: 'Kernel initialization complete.', class: 'text-green' }
+            ]},
+
+            // Phase 7: Init/Services
+            { phase: 7, lines: [
+                { text: '', class: 'text-white' },
+                { text: '[ Starting System Services ]', class: 'text-yellow' },
+                { text: '', class: 'text-white' },
+                { text: 'Starting init system (systemd)...', class: 'text-white', delay: 200 },
+                { text: '[  OK  ] Started udev - Device Manager', class: 'text-green', delay: 150 },
+                { text: '[  OK  ] Started System Logger', class: 'text-green', delay: 100 },
+                { text: '[  OK  ] Started Network Manager', class: 'text-green', delay: 150 },
+                { text: '[  OK  ] Started D-Bus System Message Bus', class: 'text-green', delay: 100 },
+                { text: '[  OK  ] Started Login Service', class: 'text-green', delay: 100 },
+                { text: '[  OK  ] Started Graphical Interface', class: 'text-green', delay: 200 },
+                { text: '[  OK  ] Reached target Graphical Interface', class: 'text-green', delay: 100 }
+            ]},
+
+            // Phase 8: Ready
+            { phase: 8, lines: [
+                { text: '', class: 'text-white' },
+                { text: '═══════════════════════════════════════════════════════', class: 'text-green' },
+                { text: '         SYSTEM BOOT COMPLETE', class: 'text-green' },
+                { text: '═══════════════════════════════════════════════════════', class: 'text-green' },
+                { text: '', class: 'text-white' },
+                { text: 'Educational OS ready.', class: 'text-cyan' },
+                { text: 'Boot time: 8.2 seconds', class: 'text-gray' },
+                { text: '', class: 'text-white' },
+                { text: 'Welcome! The operating system is now running.', class: 'text-white' },
+                { text: '', class: 'text-white' },
+                { text: 'user@educational-os:~$ _', class: 'text-green blink' }
+            ]}
+        ];
+
+        function getDelay(baseDelay) {
+            const speed = speedSelector.value;
+            const multiplier = { slow: 2, normal: 1, fast: 0.3 };
+            return (baseDelay || 150) * multiplier[speed];
+        }
+
+        async function addLine(lineConfig) {
+            if (lineConfig.clear) {
+                terminal.innerHTML = '';
+                return;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'boot-line ' + (lineConfig.class || '');
+
+            if (lineConfig.pre) {
+                const pre = document.createElement('pre');
+                pre.className = lineConfig.class || '';
+                pre.textContent = lineConfig.text;
+                div.appendChild(pre);
+            } else {
+                div.textContent = lineConfig.text;
+
+                if (lineConfig.status) {
+                    const status = document.createElement('span');
+                    status.className = lineConfig.status === 'OK' ? 'status-ok' : 'status-fail';
+                    status.textContent = `[ ${lineConfig.status} ]`;
+                    div.appendChild(status);
+                }
+            }
+
+            if (lineConfig.progress) {
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                const progressFill = document.createElement('div');
+                progressFill.className = 'progress-fill';
+                progressBar.appendChild(progressFill);
+                div.appendChild(document.createElement('br'));
+                div.appendChild(progressBar);
+
+                terminal.appendChild(div);
+
+                // Animate progress
+                await new Promise(resolve => setTimeout(resolve, 100));
+                div.classList.add('visible');
+
+                for (let i = 0; i <= 100; i += 10) {
+                    progressFill.style.width = i + '%';
+                    await new Promise(resolve => setTimeout(resolve, getDelay(50)));
+                }
+                return;
+            }
+
+            terminal.appendChild(div);
+
+            // Scroll to bottom
+            terminal.scrollTop = terminal.scrollHeight;
+
+            // Make visible with delay
+            await new Promise(resolve => setTimeout(resolve, 50));
+            div.classList.add('visible');
+
+            // Additional delay if specified
+            if (lineConfig.delay) {
+                await new Promise(resolve => setTimeout(resolve, getDelay(lineConfig.delay)));
+            }
+        }
+
+        function setPhase(phaseNum) {
+            // Clear all phases
+            for (let i = 1; i <= 8; i++) {
+                const phaseEl = document.getElementById('phase-' + i);
+                phaseEl.classList.remove('active', 'complete');
+            }
+
+            // Mark completed phases
+            for (let i = 1; i < phaseNum; i++) {
+                document.getElementById('phase-' + i).classList.add('complete');
+            }
+
+            // Mark current phase
+            if (phaseNum <= 8) {
+                document.getElementById('phase-' + phaseNum).classList.add('active');
+            }
+        }
+
+        async function startBoot() {
+            if (isBooting) return;
+
+            isBooting = true;
+            startBtn.disabled = true;
+            startBtn.textContent = 'Booting...';
+
+            terminal.innerHTML = '';
+
+            for (const phase of bootSequence) {
+                setPhase(phase.phase);
+
+                for (const line of phase.lines) {
+                    if (!isBooting) break;
+                    await addLine(line);
+                    await new Promise(resolve => setTimeout(resolve, getDelay(100)));
+                }
+
+                if (!isBooting) break;
+            }
+
+            // Mark final phase complete
+            setPhase(9);
+
+            isBooting = false;
+            startBtn.disabled = false;
+            startBtn.textContent = 'Restart Boot';
+        }
+
+        function resetBoot() {
+            isBooting = false;
+            currentPhase = 0;
+
+            // Reset phases
+            for (let i = 1; i <= 8; i++) {
+                const phaseEl = document.getElementById('phase-' + i);
+                phaseEl.classList.remove('active', 'complete');
+            }
+
+            // Clear terminal
+            terminal.innerHTML = '<div class="boot-line visible text-gray">System powered off. Press "Start Boot" to begin.</div>';
+
+            startBtn.disabled = false;
+            startBtn.textContent = 'Start Boot';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 3: OS Services, Security, and System Architectures</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <a href="week3_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <header>
+        <h1>OS Services, Security, and System Architectures</h1>
+        <p class="subtitle">Week 3: Exploring System Services, Protection, and Architecture Models</p>
+    </header>
+
+    <nav class="table-of-contents no-print">
+        <h2>Contents</h2>
+        <ul>
+            <li><a href="#objectives">Learning Objectives</a></li>
+            <li><a href="#file-system">1. File-System Management</a></li>
+            <li><a href="#mass-storage">2. Mass-Storage Management</a></li>
+            <li><a href="#caching">3. Caching</a></li>
+            <li><a href="#io-subsystem">4. I/O Subsystem</a></li>
+            <li><a href="#protection-security">5. Protection and Security</a></li>
+            <li><a href="#virtualization">6. Virtualization</a></li>
+            <li><a href="#distributed-systems">7. Distributed Systems</a></li>
+            <li><a href="#system-architecture">8. Computer System Architecture</a></li>
+            <li><a href="#summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Learning Objectives -->
+        <section id="objectives" class="learning-objectives">
+            <h2>Learning Objectives</h2>
+            <p>By the end of this session, you will be able to:</p>
+            <ul>
+                <li>Explain how operating systems manage files, mass storage, and I/O devices</li>
+                <li>Describe the role of caching in improving system performance</li>
+                <li>Differentiate between protection and security mechanisms in an OS</li>
+                <li>Understand virtualization concepts and hypervisor types</li>
+                <li>Compare different computer system architectures (single-processor, SMP, NUMA, clustered)</li>
+                <li>Describe distributed systems and network types</li>
+            </ul>
+        </section>
+
+        <!-- Section 1: File-System Management -->
+        <section id="file-system" class="content-section">
+            <h2>1. File-System Management</h2>
+
+            <div class="definition">
+                <h3>What is a File System?</h3>
+                <p>The <strong>file system</strong> provides the mechanism for organizing, storing, retrieving, and managing data on storage devices. It is one of the most visible components of an operating system.</p>
+            </div>
+
+            <p>The OS provides a uniform, logical view of information storage, abstracting the physical properties of storage devices into a logical unit: the <strong>file</strong>.</p>
+
+            <article class="os-component">
+                <h4>Files</h4>
+                <p>A <strong>file</strong> is a named collection of related information stored on secondary storage:</p>
+                <ul>
+                    <li><strong>Text files</strong> - Sequences of characters organized into lines</li>
+                    <li><strong>Binary files</strong> - Programs, images, multimedia content</li>
+                    <li><strong>Attributes</strong> - Name, type, size, permissions, timestamps</li>
+                    <li><strong>Operations</strong> - Create, read, write, delete, seek, open, close</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Directories</h4>
+                <p><strong>Directories</strong> organize files into a hierarchical structure:</p>
+                <ul>
+                    <li><strong>Root directory</strong> - The top-level directory in the hierarchy</li>
+                    <li><strong>Subdirectories</strong> - Directories within directories</li>
+                    <li><strong>Path</strong> - The route from root to a specific file (e.g., <code>/home/user/document.txt</code>)</li>
+                </ul>
+            </article>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Directory Tree Structure</h3>
+                </div>
+                <div class="directory-tree">
+                    <div class="tree-node root-node">
+                        <span class="node-label">/ (Root)</span>
+                    </div>
+                    <div class="tree-level">
+                        <div class="tree-branch">
+                            <div class="tree-node dir-node">
+                                <span class="node-label">home</span>
+                            </div>
+                            <div class="tree-children">
+                                <div class="tree-node file-node"><span class="node-label">user1</span></div>
+                                <div class="tree-node file-node"><span class="node-label">user2</span></div>
+                            </div>
+                        </div>
+                        <div class="tree-branch">
+                            <div class="tree-node dir-node">
+                                <span class="node-label">etc</span>
+                            </div>
+                            <div class="tree-children">
+                                <div class="tree-node file-node"><span class="node-label">config</span></div>
+                            </div>
+                        </div>
+                        <div class="tree-branch">
+                            <div class="tree-node dir-node">
+                                <span class="node-label">bin</span>
+                            </div>
+                            <div class="tree-children">
+                                <div class="tree-node file-node"><span class="node-label">programs</span></div>
+                            </div>
+                        </div>
+                        <div class="tree-branch">
+                            <div class="tree-node dir-node">
+                                <span class="node-label">var</span>
+                            </div>
+                            <div class="tree-children">
+                                <div class="tree-node file-node"><span class="node-label">logs</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">A typical Unix/Linux directory tree with root at the top and subdirectories branching downward.</p>
+            </div>
+
+            <h3>OS File-System Activities</h3>
+            <p>The operating system is responsible for the following file-system management activities:</p>
+            <ul>
+                <li><strong>Creating and deleting</strong> files and directories</li>
+                <li><strong>Mapping</strong> files onto secondary storage</li>
+                <li><strong>Supporting primitives</strong> for manipulating files and directories</li>
+                <li><strong>Backup</strong> of files onto stable (non-volatile) storage media</li>
+            </ul>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> The file system hides the complexity of physical storage devices, providing users and programs with a simple, uniform interface to store and retrieve data.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Mass-Storage Management -->
+        <section id="mass-storage" class="content-section">
+            <h2>2. Mass-Storage Management</h2>
+
+            <div class="definition">
+                <h3>Why Mass-Storage Management?</h3>
+                <p>Since main memory is too small and volatile to hold all data permanently, the OS must manage <strong>secondary storage</strong> (disks) efficiently. Most programs are stored on disk until loaded into memory.</p>
+            </div>
+
+            <h3>OS Mass-Storage Activities</h3>
+            <article class="os-component">
+                <h4>Disk Management</h4>
+                <ul>
+                    <li><strong>Mounting and unmounting</strong> storage devices</li>
+                    <li><strong>Free-space management</strong> - Tracking available disk space</li>
+                    <li><strong>Storage allocation</strong> - Assigning disk blocks to files</li>
+                    <li><strong>Disk scheduling</strong> - Ordering disk requests for efficiency</li>
+                    <li><strong>Partitioning</strong> - Dividing disks into logical sections</li>
+                </ul>
+            </article>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Storage Allocation Methods Comparison</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Approach</th>
+                            <th>Advantages</th>
+                            <th>Disadvantages</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Contiguous</strong></td>
+                            <td>Files stored in consecutive blocks</td>
+                            <td>Fast sequential & random access</td>
+                            <td>External fragmentation, file size must be known</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Linked</strong></td>
+                            <td>Each block points to the next</td>
+                            <td>No external fragmentation, easy growth</td>
+                            <td>Slow random access, pointer overhead</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Indexed</strong></td>
+                            <td>Index block holds all pointers</td>
+                            <td>Supports direct access, no fragmentation</td>
+                            <td>Index block overhead, limited file size</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <article class="os-component">
+                <h4>Tertiary Storage</h4>
+                <p>Beyond primary and secondary storage, <strong>tertiary storage</strong> provides archival solutions:</p>
+                <ul>
+                    <li><strong>Optical discs</strong> (CD, DVD, Blu-ray) - Read-only or read-write</li>
+                    <li><strong>Magnetic tapes</strong> - High capacity, sequential access, used for backups</li>
+                    <li><strong>Cloud storage</strong> - Remote storage accessed over the network</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>Performance Impact:</strong> The speed of the entire system often depends on how efficiently the OS manages disk storage, since disk I/O is one of the major bottlenecks in computing.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Caching -->
+        <section id="caching" class="content-section">
+            <h2>3. Caching</h2>
+
+            <div class="definition">
+                <h3>What is Caching?</h3>
+                <p><strong>Caching</strong> is the technique of copying frequently accessed data into a faster storage medium. It is a fundamental principle used at every level of a computer system to improve performance.</p>
+            </div>
+
+            <p>When data is needed, it is first checked in the cache. If found (<strong>cache hit</strong>), data is used directly from cache. If not found (<strong>cache miss</strong>), data is fetched from the slower source and a copy is placed in the cache for future use.</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Multi-Level Caching Flow</h3>
+                </div>
+                <div class="caching-flow">
+                    <div class="cache-level-row">
+                        <div class="cache-box cache-l1">
+                            <span class="cache-name">L1 Cache</span>
+                            <span class="cache-detail">~1 ns | 32-64 KB</span>
+                        </div>
+                        <div class="cache-arrow">&#8594;</div>
+                        <div class="cache-box cache-l2">
+                            <span class="cache-name">L2 Cache</span>
+                            <span class="cache-detail">~4 ns | 256 KB-1 MB</span>
+                        </div>
+                        <div class="cache-arrow">&#8594;</div>
+                        <div class="cache-box cache-l3">
+                            <span class="cache-name">L3 Cache</span>
+                            <span class="cache-detail">~10 ns | 4-64 MB</span>
+                        </div>
+                    </div>
+                    <div class="cache-flow-down">&#8595;</div>
+                    <div class="cache-level-row">
+                        <div class="cache-box cache-ram">
+                            <span class="cache-name">Main Memory (RAM)</span>
+                            <span class="cache-detail">~100 ns | 8-64 GB</span>
+                        </div>
+                        <div class="cache-arrow">&#8594;</div>
+                        <div class="cache-box cache-disk">
+                            <span class="cache-name">Disk (SSD/HDD)</span>
+                            <span class="cache-detail">~10 &mu;s - 10 ms | TB</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">Data flows through multiple cache levels. Each miss at a faster level triggers a fetch from the next slower level.</p>
+            </div>
+
+            <h3>Key Caching Concepts</h3>
+
+            <article class="os-component">
+                <h4>Cache Management</h4>
+                <ul>
+                    <li><strong>Cache size</strong> - Limited; careful selection of what to cache is critical</li>
+                    <li><strong>Replacement policy</strong> - Decides which cached data to evict (e.g., LRU, FIFO)</li>
+                    <li><strong>Write policy</strong> - Write-through (immediate) vs write-back (deferred)</li>
+                    <li><strong>Coherency</strong> - Ensuring all copies of data are consistent across caches</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>Caching in Everyday Computing</h4>
+                <ul>
+                    <li><strong>CPU cache</strong> - Hardware caches instructions and data near the processor</li>
+                    <li><strong>Disk cache</strong> - OS caches frequently accessed disk blocks in RAM</li>
+                    <li><strong>Web cache</strong> - Browsers cache web pages and images locally</li>
+                    <li><strong>DNS cache</strong> - OS caches domain name resolutions</li>
+                </ul>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Important:</strong> Caching introduces the <strong>cache coherency problem</strong> in multiprocessor systems. When multiple CPUs cache the same data, updates by one CPU must be reflected in all other caches to maintain consistency.</p>
+            </div>
+        </section>
+
+        <!-- Section 4: I/O Subsystem -->
+        <section id="io-subsystem" class="content-section">
+            <h2>4. I/O Subsystem</h2>
+
+            <div class="definition">
+                <h3>What is the I/O Subsystem?</h3>
+                <p>The <strong>I/O subsystem</strong> manages and controls all input/output operations and devices. One of its key purposes is to hide the peculiarities of specific hardware devices from the rest of the operating system.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">I/O System Layer Stack</h3>
+                </div>
+                <div class="io-layer-stack">
+                    <div class="io-layer io-layer-app">
+                        <span class="io-layer-name">User Application</span>
+                        <span class="io-layer-desc">Issues I/O requests via system calls</span>
+                    </div>
+                    <div class="io-layer io-layer-kernel">
+                        <span class="io-layer-name">Kernel I/O Subsystem</span>
+                        <span class="io-layer-desc">Scheduling, buffering, caching, spooling, error handling</span>
+                    </div>
+                    <div class="io-layer io-layer-driver">
+                        <span class="io-layer-name">Device Drivers</span>
+                        <span class="io-layer-desc">Device-specific code that interfaces with hardware</span>
+                    </div>
+                    <div class="io-layer io-layer-controller">
+                        <span class="io-layer-name">Device Controllers</span>
+                        <span class="io-layer-desc">Hardware interface (registers, buffers)</span>
+                    </div>
+                    <div class="io-layer io-layer-device">
+                        <span class="io-layer-name">Physical Devices</span>
+                        <span class="io-layer-desc">Keyboard, disk, network, display, etc.</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>I/O Kernel Services</h3>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">I/O Techniques Comparison</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Technique</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Buffering</strong></td>
+                            <td>Temporarily storing data in memory during transfer between devices with speed mismatches</td>
+                            <td>Streaming video buffers frames ahead of playback</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Caching</strong></td>
+                            <td>Keeping a copy of frequently used data in faster memory</td>
+                            <td>Disk block cache in RAM</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spooling</strong></td>
+                            <td>Holding output for a device that cannot accept interleaved data streams</td>
+                            <td>Print spooler queues documents for the printer</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <article class="os-component">
+                <h4>Device Drivers</h4>
+                <p><strong>Device drivers</strong> provide a uniform interface to the I/O subsystem:</p>
+                <ul>
+                    <li>Each device type has its own driver</li>
+                    <li>Drivers encapsulate device-specific details</li>
+                    <li>Allow the OS to treat all devices through a common interface</li>
+                    <li>Can be loaded dynamically (plug-and-play)</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>Design Principle:</strong> The I/O subsystem provides a device-independent interface. Programs can read/write to any device using the same system calls, regardless of whether it's a disk, network card, or keyboard.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: Protection and Security -->
+        <section id="protection-security" class="content-section">
+            <h2>5. Protection and Security</h2>
+
+            <div class="definition">
+                <h3>Protection vs Security</h3>
+                <p><strong>Protection</strong> is an internal mechanism: controlling access of processes and users to system resources. <strong>Security</strong> is defense against external and internal attacks: viruses, worms, denial-of-service, identity theft, etc.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Security Layers</h3>
+                </div>
+                <div class="security-layers">
+                    <div class="security-ring ring-outer">
+                        <span class="ring-label">Physical Security</span>
+                        <span class="ring-desc">Data centers, locks, access cards</span>
+                        <div class="security-ring ring-middle">
+                            <span class="ring-label">Network Security</span>
+                            <span class="ring-desc">Firewalls, encryption, VPN</span>
+                            <div class="security-ring ring-inner">
+                                <span class="ring-label">OS Security</span>
+                                <span class="ring-desc">Authentication, access control</span>
+                                <div class="security-ring ring-core">
+                                    <span class="ring-label">Application</span>
+                                    <span class="ring-desc">Input validation</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">Security is implemented in layers. A breach must penetrate multiple layers to reach the core application data.</p>
+            </div>
+
+            <h3>Protection Mechanisms</h3>
+
+            <article class="os-component">
+                <h4>User Authentication</h4>
+                <p>The OS must <strong>distinguish among users</strong> to determine who can do what:</p>
+                <ul>
+                    <li><strong>User ID (UID)</strong> - Unique identifier for each user</li>
+                    <li><strong>Group ID (GID)</strong> - Users can belong to groups for shared access</li>
+                    <li><strong>Passwords and credentials</strong> - Verify user identity</li>
+                    <li><strong>Privilege escalation</strong> - Temporarily gaining higher privileges (e.g., <code>sudo</code>)</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Access Control</h4>
+                <p>Files and resources have <strong>permissions</strong> that control who can access them:</p>
+                <ul>
+                    <li><strong>Read (r)</strong> - View file contents</li>
+                    <li><strong>Write (w)</strong> - Modify file contents</li>
+                    <li><strong>Execute (x)</strong> - Run as a program</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>Unix File Permissions Example</h4>
+                <p>The command <code>ls -l</code> shows permissions in the format:</p>
+                <div class="permissions-example">
+                    <code class="perm-display">-rwxr-xr-- 1 owner group 4096 Jan 1 file.txt</code>
+                    <div class="perm-breakdown">
+                        <div class="perm-group">
+                            <span class="perm-bits">rwx</span>
+                            <span class="perm-who">Owner</span>
+                        </div>
+                        <div class="perm-group">
+                            <span class="perm-bits">r-x</span>
+                            <span class="perm-who">Group</span>
+                        </div>
+                        <div class="perm-group">
+                            <span class="perm-bits">r--</span>
+                            <span class="perm-who">Others</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Defense in Depth:</strong> Security must be implemented at multiple levels - physical, human, operating system, and network. A chain is only as strong as its weakest link.</p>
+            </div>
+        </section>
+
+        <!-- Section 6: Virtualization -->
+        <section id="virtualization" class="content-section">
+            <h2>6. Virtualization</h2>
+
+            <div class="definition">
+                <h3>What is Virtualization?</h3>
+                <p><strong>Virtualization</strong> is a technology that allows a single physical machine to run multiple operating systems concurrently. A <strong>Virtual Machine Manager (VMM)</strong> or <strong>hypervisor</strong> creates and manages virtual machines (VMs), each with its own virtual hardware.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">VMM Architecture</h3>
+                </div>
+                <div class="vmm-architecture">
+                    <div class="vmm-vms">
+                        <div class="vm-box">
+                            <div class="vm-app">App A</div>
+                            <div class="vm-os">Guest OS 1<br>(Windows)</div>
+                        </div>
+                        <div class="vm-box">
+                            <div class="vm-app">App B</div>
+                            <div class="vm-os">Guest OS 2<br>(Linux)</div>
+                        </div>
+                        <div class="vm-box">
+                            <div class="vm-app">App C</div>
+                            <div class="vm-os">Guest OS 3<br>(macOS)</div>
+                        </div>
+                    </div>
+                    <div class="vmm-layer">
+                        <span>Virtual Machine Manager (Hypervisor)</span>
+                    </div>
+                    <div class="vmm-hardware">
+                        <span>Physical Hardware (CPU, Memory, Disk, Network)</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Types of Hypervisors</h3>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Hypervisor Comparison</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Type 1 (Bare-Metal)</th>
+                            <th>Type 2 (Hosted)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Runs on</strong></td>
+                            <td>Directly on hardware</td>
+                            <td>On top of a host OS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Performance</strong></td>
+                            <td>Better (less overhead)</td>
+                            <td>Slightly lower (extra OS layer)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Use case</strong></td>
+                            <td>Servers, data centers</td>
+                            <td>Desktop testing, development</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Examples</strong></td>
+                            <td>VMware ESXi, Hyper-V, Xen</td>
+                            <td>VirtualBox, VMware Workstation</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Benefits of Virtualization</h3>
+            <ul>
+                <li><strong>Server consolidation</strong> - Run multiple servers on one physical machine</li>
+                <li><strong>Isolation</strong> - VMs are isolated from each other; a crash in one doesn't affect others</li>
+                <li><strong>Testing and development</strong> - Run different OS environments simultaneously</li>
+                <li><strong>Snapshots and migration</strong> - Save VM state and move VMs between physical hosts</li>
+                <li><strong>Cloud computing</strong> - Foundation of modern cloud infrastructure</li>
+            </ul>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> Virtualization is the foundation of cloud computing. Services like AWS, Azure, and Google Cloud use hypervisors to run thousands of virtual machines on shared physical infrastructure.</p>
+            </div>
+        </section>
+
+        <!-- Section 7: Distributed Systems -->
+        <section id="distributed-systems" class="content-section">
+            <h2>7. Distributed Systems</h2>
+
+            <div class="definition">
+                <h3>What are Distributed Systems?</h3>
+                <p>A <strong>distributed system</strong> is a collection of physically separate, networked computers that work together to appear as a single coherent system. They communicate and coordinate through a <strong>network</strong>.</p>
+            </div>
+
+            <h3>Network Types</h3>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Network Types Comparison</h3>
+                </div>
+                <div class="network-grid">
+                    <div class="network-card network-pan">
+                        <h4>PAN</h4>
+                        <p class="network-full">Personal Area Network</p>
+                        <p class="network-range">Range: ~1-10 meters</p>
+                        <p class="network-example">Bluetooth, USB connections</p>
+                    </div>
+                    <div class="network-card network-lan">
+                        <h4>LAN</h4>
+                        <p class="network-full">Local Area Network</p>
+                        <p class="network-range">Range: Building / Campus</p>
+                        <p class="network-example">Ethernet, Wi-Fi</p>
+                    </div>
+                    <div class="network-card network-man">
+                        <h4>MAN</h4>
+                        <p class="network-full">Metropolitan Area Network</p>
+                        <p class="network-range">Range: City / Region</p>
+                        <p class="network-example">Cable TV networks, city Wi-Fi</p>
+                    </div>
+                    <div class="network-card network-wan">
+                        <h4>WAN</h4>
+                        <p class="network-full">Wide Area Network</p>
+                        <p class="network-range">Range: Countries / Global</p>
+                        <p class="network-example">The Internet, leased lines</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Why Distributed Systems?</h3>
+            <ul>
+                <li><strong>Resource sharing</strong> - Share hardware, software, and data across network</li>
+                <li><strong>Computation speedup</strong> - Distribute tasks across multiple machines</li>
+                <li><strong>Reliability</strong> - If one node fails, others can continue operating</li>
+                <li><strong>Communication</strong> - Enable users to exchange information (email, messaging)</li>
+            </ul>
+
+            <article class="os-component">
+                <h4>Network Operating Systems vs Distributed Operating Systems</h4>
+                <ul>
+                    <li><strong>Network OS</strong> - Users are aware of multiple machines; must explicitly access remote resources (e.g., SSH, file sharing)</li>
+                    <li><strong>Distributed OS</strong> - Users see a single system; resource access is transparent (the system decides where to execute tasks)</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>Modern Relevance:</strong> Today's internet services (search engines, social media, streaming) are all built on distributed systems, with thousands of computers working together seamlessly.</p>
+            </div>
+        </section>
+
+        <!-- Section 8: Computer System Architecture -->
+        <section id="system-architecture" class="content-section">
+            <h2>8. Computer System Architecture</h2>
+
+            <p>Computer systems can be categorized by the number and arrangement of their processors:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Architecture Comparison</h3>
+                </div>
+                <div class="architecture-grid">
+                    <div class="arch-card">
+                        <div class="arch-header arch-single">Single Processor</div>
+                        <div class="arch-body">
+                            <p><strong>Description:</strong> One general-purpose CPU with one processing core</p>
+                            <p><strong>Characteristics:</strong></p>
+                            <ul>
+                                <li>Simplest architecture</li>
+                                <li>May have special-purpose processors (GPU, DMA controller)</li>
+                                <li>Historically dominant, now rare</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-header arch-smp">SMP (Symmetric Multiprocessing)</div>
+                        <div class="arch-body">
+                            <p><strong>Description:</strong> Multiple processors of equal capability sharing memory and I/O</p>
+                            <p><strong>Characteristics:</strong></p>
+                            <ul>
+                                <li>Each CPU runs any process</li>
+                                <li>Shared memory bus</li>
+                                <li>Most common modern architecture</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-header arch-numa">NUMA (Non-Uniform Memory Access)</div>
+                        <div class="arch-body">
+                            <p><strong>Description:</strong> Multiple CPUs, each with local memory, connected via shared bus</p>
+                            <p><strong>Characteristics:</strong></p>
+                            <ul>
+                                <li>Fast access to local memory</li>
+                                <li>Slower access to remote memory</li>
+                                <li>Scales better than SMP</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="arch-card">
+                        <div class="arch-header arch-clustered">Clustered Systems</div>
+                        <div class="arch-body">
+                            <p><strong>Description:</strong> Multiple independent systems (nodes) working together</p>
+                            <p><strong>Characteristics:</strong></p>
+                            <ul>
+                                <li>High availability and fault tolerance</li>
+                                <li>Can be asymmetric or symmetric clustering</li>
+                                <li>Used in servers and supercomputers</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <article class="os-component">
+                <h4>Multicore Processors</h4>
+                <p>Modern processors contain <strong>multiple cores</strong> on a single chip:</p>
+                <ul>
+                    <li>Each core is a full processing unit</li>
+                    <li>Cores share on-chip cache (typically L2/L3)</li>
+                    <li>More energy-efficient than multiple separate processors</li>
+                    <li>On-chip communication is faster than between-chip</li>
+                </ul>
+            </article>
+
+            <div class="example">
+                <h4>Real-World Architecture Examples</h4>
+                <ul>
+                    <li><strong>Your laptop/phone</strong> - Multicore SMP (4-16 cores)</li>
+                    <li><strong>Server</strong> - Multi-socket NUMA (2-8 sockets, each with 32+ cores)</li>
+                    <li><strong>Google/Amazon data center</strong> - Clustered system with thousands of nodes</li>
+                    <li><strong>Supercomputer</strong> - Massively clustered with millions of cores</li>
+                </ul>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Trend:</strong> The trend in computing is toward more cores and more parallelism. Operating systems must efficiently manage and schedule work across many processors and cores.</p>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary" class="content-section summary">
+            <h2>Summary and Key Takeaways</h2>
+
+            <h3>What We've Learned</h3>
+            <ol>
+                <li><strong>File-system management provides organization</strong> - The OS manages files and directories, providing a logical structure on top of physical storage</li>
+
+                <li><strong>Mass-storage management is critical</strong> - Efficient disk management (allocation, scheduling) directly impacts system performance</li>
+
+                <li><strong>Caching improves performance at every level</strong> - From CPU caches to web caches, storing frequently used data in faster storage is a universal optimization</li>
+
+                <li><strong>The I/O subsystem hides hardware complexity</strong> - Layered architecture with device drivers provides a uniform interface for all devices</li>
+
+                <li><strong>Protection controls internal access</strong> - User IDs, permissions, and access control lists determine who can access what resources</li>
+
+                <li><strong>Security defends against attacks</strong> - Multiple layers of defense protect the system from external and internal threats</li>
+
+                <li><strong>Virtualization enables resource sharing</strong> - Hypervisors allow multiple OS instances on one physical machine, forming the basis of cloud computing</li>
+
+                <li><strong>System architectures vary in scale</strong> - From single processors to clustered systems, each architecture has trade-offs in performance, cost, and complexity</li>
+            </ol>
+
+            <div class="key-message">
+                <p><strong>Looking Ahead:</strong> In the coming weeks, we'll explore process scheduling algorithms, inter-process communication, and synchronization mechanisms in detail.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <section id="image-credits">
+            <h2>Credits and Attributions</h2>
+            <p class="credits-intro">All diagrams in this document are original educational works created specifically for this course.</p>
+            <ul class="credits-list">
+                <li><strong>Directory Tree Diagram:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Multi-Level Caching Flow:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>I/O Layer Stack:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Security Layers:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>VMM Architecture:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Network Types Grid:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Architecture Comparison:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+            </ul>
+            <p class="credits-intro" style="margin-top: 1rem;">
+                <strong>License:</strong> All diagrams are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+            </p>
+        </section>
+    </footer>
+
+    <style>
+        /* === DIRECTORY TREE === */
+        .directory-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .tree-node {
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            color: white;
+        }
+
+        .root-node {
+            background: #e74c3c;
+            font-size: 1.1em;
+        }
+
+        .dir-node {
+            background: #3498db;
+        }
+
+        .file-node {
+            background: #27ae60;
+            font-size: 0.85em;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .tree-level {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tree-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tree-children {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* === CACHING FLOW === */
+        .caching-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .cache-level-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cache-box {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            min-width: 140px;
+        }
+
+        .cache-name {
+            display: block;
+            font-size: 1em;
+        }
+
+        .cache-detail {
+            display: block;
+            font-size: 0.75em;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
+        .cache-l1 { background: #e74c3c; }
+        .cache-l2 { background: #f39c12; }
+        .cache-l3 { background: #e67e22; }
+        .cache-ram { background: #27ae60; }
+        .cache-disk { background: #2c3e50; }
+
+        .cache-arrow {
+            font-size: 1.5em;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .cache-flow-down {
+            font-size: 1.5em;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .cache-level-row {
+                flex-direction: column;
+            }
+            .cache-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* === I/O LAYER STACK === */
+        .io-layer-stack {
+            max-width: 500px;
+            margin: 0 auto;
+            border: 3px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .io-layer {
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .io-layer:last-child {
+            border-bottom: none;
+        }
+
+        .io-layer-name {
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .io-layer-desc {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+
+        .io-layer-app { background: #3498db; }
+        .io-layer-kernel { background: #2980b9; }
+        .io-layer-driver { background: #27ae60; }
+        .io-layer-controller { background: #f39c12; }
+        .io-layer-device { background: #e74c3c; }
+
+        /* === SECURITY LAYERS === */
+        .security-layers {
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .security-ring {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 1.2rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .ring-label {
+            font-weight: 700;
+            font-size: 0.95em;
+            display: block;
+        }
+
+        .ring-desc {
+            font-size: 0.75em;
+            opacity: 0.8;
+            display: block;
+            margin-bottom: 0.75rem;
+        }
+
+        .ring-outer {
+            background: #e8f5e9;
+            border: 3px solid #27ae60;
+            color: #1b5e20;
+        }
+
+        .ring-middle {
+            background: #e3f2fd;
+            border: 3px solid #3498db;
+            color: #0d47a1;
+        }
+
+        .ring-inner {
+            background: #fff3e0;
+            border: 3px solid #f39c12;
+            color: #e65100;
+        }
+
+        .ring-core {
+            background: #fce4ec;
+            border: 3px solid #e74c3c;
+            color: #b71c1c;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .security-ring {
+                padding: 0.8rem;
+            }
+            .ring-label {
+                font-size: 0.8em;
+            }
+            .ring-desc {
+                font-size: 0.65em;
+            }
+        }
+
+        /* === PERMISSIONS EXAMPLE === */
+        .permissions-example {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .perm-display {
+            display: block;
+            color: #2ecc71;
+            font-size: 1.05em;
+            margin-bottom: 1rem;
+            background: none;
+            padding: 0;
+        }
+
+        .perm-breakdown {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .perm-group {
+            text-align: center;
+        }
+
+        .perm-bits {
+            display: block;
+            color: #f39c12;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: none;
+            padding: 0;
+        }
+
+        .perm-who {
+            color: #bdc3c7;
+            font-size: 0.85em;
+        }
+
+        /* === VMM ARCHITECTURE === */
+        .vmm-architecture {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 3px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .vmm-vms {
+            display: flex;
+            gap: 0;
+        }
+
+        .vm-box {
+            flex: 1;
+            text-align: center;
+            border-right: 2px solid var(--primary-color);
+        }
+
+        .vm-box:last-child {
+            border-right: none;
+        }
+
+        .vm-app {
+            background: #3498db;
+            color: white;
+            padding: 0.75rem;
+            font-weight: 600;
+        }
+
+        .vm-os {
+            background: #27ae60;
+            color: white;
+            padding: 0.75rem;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        .vmm-layer {
+            background: #9b59b6;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            font-weight: 700;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        .vmm-hardware {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.9em;
+            border-top: 2px solid var(--primary-color);
+        }
+
+        /* === NETWORK GRID === */
+        .network-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .network-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .network-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 3px solid;
+            text-align: center;
+        }
+
+        .network-card h4 {
+            margin-top: 0;
+            font-size: 1.4em;
+        }
+
+        .network-full {
+            font-weight: 600;
+            margin: 0.25rem 0;
+        }
+
+        .network-range {
+            font-size: 0.9em;
+            margin: 0.25rem 0;
+        }
+
+        .network-example {
+            font-size: 0.85em;
+            opacity: 0.7;
+            margin: 0.25rem 0;
+        }
+
+        .network-pan {
+            background: #fce4ec;
+            border-color: #e74c3c;
+            color: #b71c1c;
+        }
+
+        .network-lan {
+            background: #e3f2fd;
+            border-color: #3498db;
+            color: #0d47a1;
+        }
+
+        .network-man {
+            background: #fff3e0;
+            border-color: #f39c12;
+            color: #e65100;
+        }
+
+        .network-wan {
+            background: #e8f5e9;
+            border-color: #27ae60;
+            color: #1b5e20;
+        }
+
+        /* === ARCHITECTURE GRID === */
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .architecture-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .arch-card {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+        }
+
+        .arch-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 700;
+            text-align: center;
+            font-size: 1.05em;
+        }
+
+        .arch-single { background: #3498db; }
+        .arch-smp { background: #27ae60; }
+        .arch-numa { background: #9b59b6; }
+        .arch-clustered { background: #e74c3c; }
+
+        .arch-body {
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+
+        .arch-body p {
+            margin: 0.5rem 0;
+            font-size: 0.9em;
+        }
+
+        .arch-body ul {
+            margin: 0.5rem 0;
+            padding-left: 1.2rem;
+            font-size: 0.85em;
+        }
+    </style>
+</body>
+</html>
