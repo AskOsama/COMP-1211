@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأسبوع الرابع: خدمات نظام التشغيل</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <a href="week4.html" class="lang-button" title="Switch to English">English</a>
+    </div>
+
+    <header>
+        <h1>خدمات نظام التشغيل</h1>
+        <p class="subtitle">الأسبوع الرابع: خدمات نظام التشغيل وواجهات المستخدم واستدعاءات النظام</p>
+    </header>
+
+    <nav class="table-of-contents no-print">
+        <h2>المحتويات</h2>
+        <ul>
+            <li><a href="#objectives">أهداف التعلم</a></li>
+            <li><a href="#os-services">1. خدمات نظام التشغيل</a></li>
+            <li><a href="#os-services-view">2. عرض خدمات نظام التشغيل</a></li>
+            <li><a href="#cli">3. مفسر سطر الأوامر (CLI)</a></li>
+            <li><a href="#gui">4. واجهة المستخدم الرسومية (GUI)</a></li>
+            <li><a href="#system-calls">5. استدعاءات النظام</a></li>
+            <li><a href="#system-call-impl">6. تنفيذ استدعاءات النظام</a></li>
+            <li><a href="#summary">الملخص</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Learning Objectives -->
+        <section id="objectives" class="learning-objectives">
+            <h2>أهداف التعلم</h2>
+            <p>بنهاية هذه الجلسة، ستكون قادراً على:</p>
+            <ul>
+                <li>تحديد الخدمات التي يوفرها نظام التشغيل</li>
+                <li>توضيح كيفية استخدام استدعاءات النظام لتوفير خدمات نظام التشغيل</li>
+                <li>مقارنة والتباين بين الاستراتيجيات المتجانسة والطبقية والنواة الصغيرة والوحدية والهجينة لتصميم أنظمة التشغيل</li>
+                <li>توضيح عملية إقلاع نظام التشغيل</li>
+                <li>تطبيق أدوات لمراقبة أداء نظام التشغيل</li>
+                <li>تصميم وتنفيذ وحدات النواة للتفاعل مع نواة لينكس</li>
+            </ul>
+        </section>
+
+        <!-- Section 1: Operating-System Services -->
+        <section id="os-services" class="content-section">
+            <h2>1. خدمات نظام التشغيل</h2>
+
+            <div class="definition">
+                <h3>ما هي خدمات نظام التشغيل؟</h3>
+                <p>يوفر نظام التشغيل بيئة لتنفيذ البرامج و<strong>خدمات</strong> للبرامج والمستخدمين. تختلف هذه الخدمات من نظام تشغيل لآخر، لكن هناك فئات مشتركة من الخدمات موجودة في جميع أنظمة التشغيل.</p>
+            </div>
+
+            <p>يمكن تقسيم خدمات نظام التشغيل إلى فئتين: تلك <strong>المفيدة للمستخدم</strong> وتلك التي تضمن <strong>كفاءة تشغيل النظام</strong>.</p>
+
+            <h3>خدمات مفيدة للمستخدم</h3>
+
+            <article class="os-component">
+                <h4>واجهة المستخدم (UI)</h4>
+                <p>تقريباً جميع أنظمة التشغيل توفر <strong>واجهة مستخدم</strong>. يمكن أن تتخذ عدة أشكال:</p>
+                <ul>
+                    <li><strong>واجهة سطر الأوامر (CLI)</strong> - تستخدم أوامر نصية تُدخل عبر لوحة المفاتيح</li>
+                    <li><strong>واجهة المستخدم الرسومية (GUI)</strong> - نظام قائم على النوافذ مع جهاز تأشير (فأرة، لوحة لمس)</li>
+                    <li><strong>واجهة الشاشة اللمسية</strong> - إيماءات على شاشة لمسية (ضغط، تمرير، تكبير بالقرص)</li>
+                    <li><strong>واجهة الدُفعات (Batch)</strong> - أوامر وتوجيهات تُدخل في ملفات؛ تُنفذ دون تفاعل مباشر من المستخدم</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>تنفيذ البرامج</h4>
+                <p>يجب أن يكون النظام قادراً على <strong>تحميل برنامج في الذاكرة وتشغيله</strong>. يجب أن يكون البرنامج قادراً على إنهاء تنفيذه، إما بشكل طبيعي أو غير طبيعي (مع الإشارة إلى خطأ).</p>
+            </article>
+
+            <article class="os-component">
+                <h4>عمليات الإدخال/الإخراج</h4>
+                <p>قد يتطلب البرنامج قيد التشغيل إجراء إدخال/إخراج، يتضمن ملفاً أو جهاز إدخال/إخراج. عادةً <strong>لا يمكن للمستخدمين التحكم مباشرة في أجهزة الإدخال/الإخراج</strong>، لذا يجب على نظام التشغيل توفير وسيلة للقيام بذلك.</p>
+            </article>
+
+            <article class="os-component">
+                <h4>التعامل مع نظام الملفات</h4>
+                <p>تحتاج البرامج إلى <strong>قراءة وكتابة الملفات والأدلة</strong>، وإنشائها وحذفها، والبحث فيها، وعرض معلومات الملفات، وإدارة الصلاحيات.</p>
+            </article>
+
+            <article class="os-component">
+                <h4>الاتصالات</h4>
+                <p>قد تحتاج العمليات لتبادل المعلومات مع بعضها البعض، على نفس الحاسوب أو بين حواسيب متصلة بالشبكة. يمكن تنفيذ الاتصال عبر نموذجين:</p>
+                <ul>
+                    <li><strong>الذاكرة المشتركة</strong> - عمليتان أو أكثر تقرأ وتكتب في منطقة مشتركة من الذاكرة</li>
+                    <li><strong>تمرير الرسائل</strong> - حزم من المعلومات تُنقل بين العمليات بواسطة نظام التشغيل</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>اكتشاف الأخطاء</h4>
+                <p>يحتاج نظام التشغيل أن يكون على دراية دائمة بالأخطاء المحتملة. يمكن أن تحدث الأخطاء في:</p>
+                <ul>
+                    <li><strong>عتاد المعالج والذاكرة</strong> (مثل خطأ في الذاكرة، انقطاع التيار)</li>
+                    <li><strong>أجهزة الإدخال/الإخراج</strong> (مثل خطأ تكافؤ في القرص، فشل اتصال في الشبكة)</li>
+                    <li><strong>برامج المستخدم</strong> (مثل تجاوز حسابي، محاولة الوصول إلى موقع ذاكرة غير قانوني)</li>
+                </ul>
+                <p>لكل نوع من الأخطاء، يجب على نظام التشغيل اتخاذ الإجراء المناسب لضمان حوسبة صحيحة ومتسقة.</p>
+            </article>
+
+            <h3>خدمات لكفاءة تشغيل النظام</h3>
+
+            <article class="os-component">
+                <h4>تخصيص الموارد</h4>
+                <p>عندما تعمل عمليات متعددة بشكل متزامن، يجب تخصيص الموارد لكل منها. يدير نظام التشغيل أنواعاً عديدة من الموارد:</p>
+                <ul>
+                    <li><strong>جدولة المعالج</strong> - تحدد أي عملية تحصل على المعالج ولكم من الوقت</li>
+                    <li><strong>تخصيص الذاكرة</strong> - تعيين كتل الذاكرة للعمليات</li>
+                    <li><strong>تخصيص الأجهزة</strong> - إدارة الوصول إلى أجهزة الإدخال/الإخراج</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>التسجيل (Logging)</h4>
+                <p>يتتبع نظام التشغيل كمية ونوع موارد الحاسوب التي يستخدمها كل مستخدم أو عملية. يمكن استخدام هذا السجل من أجل:</p>
+                <ul>
+                    <li><strong>المحاسبة</strong> - إحصائيات الاستخدام لأغراض الفوترة</li>
+                    <li><strong>ضبط الأداء</strong> - تجميع بيانات الاستخدام لإعادة تكوين النظام لتحسين الأداء</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>الحماية والأمان</h4>
+                <p>عندما تُنفذ عدة عمليات بشكل متزامن، لا ينبغي أن تتمكن عملية واحدة من التدخل في العمليات الأخرى أو في نظام التشغيل نفسه:</p>
+                <ul>
+                    <li><strong>الحماية</strong> - تضمن التحكم في جميع عمليات الوصول إلى موارد النظام</li>
+                    <li><strong>الأمان</strong> - يدافع ضد التهديدات الخارجية (مثل هجمات حجب الخدمة، الديدان، الفيروسات) ويتطلب مصادقة المستخدم للوصول إلى موارد النظام</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> تشكل خدمات نظام التشغيل الجسر بين احتياجات المستخدم وقدرات العتاد. كل إجراء يقوم به برنامج المستخدم -- من قراءة ملف إلى عرض المخرجات -- يعتمد في النهاية على خدمة من خدمات نظام التشغيل.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: A View of Operating-System Services -->
+        <section id="os-services-view" class="content-section">
+            <h2>2. عرض خدمات نظام التشغيل</h2>
+
+            <div class="definition">
+                <h3>العرض الطبقي لخدمات نظام التشغيل</h3>
+                <p>يمكن تصور خدمات نظام التشغيل كـ <strong>بنية طبقية</strong> حيث توفر كل طبقة خدمات للطبقة فوقها وتستخدم خدمات من الطبقة تحتها. يوضح هذا العرض كيف تتفاعل برامج المستخدم مع نظام التشغيل من خلال واجهات محددة بدقة.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">نظرة عامة على خدمات نظام التشغيل</h3>
+                </div>
+                <div class="os-layers-diagram">
+                    <div class="os-layer layer-users">
+                        <span class="layer-name">المستخدمون</span>
+                        <span class="layer-items">مستخدم 1 &nbsp; | &nbsp; مستخدم 2 &nbsp; | &nbsp; مستخدم 3 &nbsp; | &nbsp; ... &nbsp; | &nbsp; مستخدم n</span>
+                    </div>
+                    <div class="os-layer layer-programs">
+                        <span class="layer-name">برامج النظام والتطبيقات</span>
+                        <span class="layer-items">مترجم | مُجمِّع | محرر نصوص | نظام قواعد بيانات</span>
+                    </div>
+                    <div class="os-layer layer-ui">
+                        <span class="layer-name">واجهات المستخدم</span>
+                        <span class="layer-items">GUI &nbsp; | &nbsp; دُفعات &nbsp; | &nbsp; سطر الأوامر</span>
+                    </div>
+                    <div class="os-layer layer-syscalls">
+                        <span class="layer-name">استدعاءات النظام</span>
+                    </div>
+                    <div class="os-layer layer-services">
+                        <span class="layer-name">خدمات نظام التشغيل</span>
+                        <span class="layer-items">تنفيذ البرامج | عمليات I/O | أنظمة الملفات | الاتصالات | اكتشاف الأخطاء</span>
+                    </div>
+                    <div class="os-layer layer-kernel">
+                        <span class="layer-name">خدمات نواة نظام التشغيل</span>
+                        <span class="layer-items">تخصيص الموارد | التسجيل | الحماية والأمان</span>
+                    </div>
+                    <div class="os-layer layer-hardware">
+                        <span class="layer-name">العتاد</span>
+                        <span class="layer-items">المعالج | الذاكرة | الأقراص | الشبكة | أجهزة I/O</span>
+                    </div>
+                </div>
+                <p class="diagram-note">عرض طبقي يوضح كيف تصل برامج المستخدم إلى العتاد من خلال استدعاءات النظام وخدمات نظام التشغيل. خدمات واجهة المستخدم تقع فوق واجهة استدعاءات النظام، بينما خدمات إدارة الموارد تعمل تحتها.</p>
+            </div>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> تعمل واجهة استدعاءات النظام كحد فاصل بين برامج مستوى المستخدم وخدمات مستوى النواة. كل ما فوق خط استدعاءات النظام يعمل في وضع المستخدم؛ وكل ما تحته يعمل في وضع النواة.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Command-Line Interpreter -->
+        <section id="cli" class="content-section">
+            <h2>3. مفسر سطر الأوامر (CLI)</h2>
+
+            <div class="definition">
+                <h3>ما هو مفسر سطر الأوامر؟</h3>
+                <p><strong>مفسر سطر الأوامر</strong> (يُسمى أيضاً <strong>الصدفة - Shell</strong>) يسمح بإدخال الأوامر مباشرة من المستخدم. يُنفذ أحياناً في النواة، وأحياناً بواسطة برامج النظام. في الأنظمة التي تحتوي على عدة مفسرات أوامر، تُعرف المفسرات بـ <strong>الأصداف (Shells)</strong>.</p>
+            </div>
+
+            <p>يجلب مفسر سطر الأوامر أمراً من المستخدم وينفذه. الوظيفة الأساسية هي <strong>الحصول على الأمر التالي المحدد من المستخدم وتنفيذه</strong>.</p>
+
+            <h3>كيف تعمل أوامر CLI</h3>
+            <p>يمكن تنفيذ الأوامر بطريقتين:</p>
+            <article class="os-component">
+                <h4>أوامر مدمجة</h4>
+                <p>مفسر الأوامر نفسه يحتوي على الكود لتنفيذ الأمر. عدد الأوامر يحدد حجم مفسر الأوامر.</p>
+            </article>
+
+            <article class="os-component">
+                <h4>برامج النظام</h4>
+                <p>تُنفذ الأوامر من خلال <strong>برامج النظام</strong>. مفسر الأوامر لا يفهم الأمر؛ بل يستخدم الأمر ببساطة لتحديد ملف ليتم تحميله وتنفيذه. على سبيل المثال:</p>
+                <div class="code-example">
+                    <pre><code>$ rm file.txt</code></pre>
+                    <p>تبحث الصدفة عن ملف يسمى <code>rm</code>، تحمله في الذاكرة، وتنفذه مع المعامل <code>file.txt</code>.</p>
+                </div>
+            </article>
+
+            <h3>الأصداف الشائعة</h3>
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">أصداف Unix/Linux الشائعة</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الصدفة</th>
+                            <th>الاسم</th>
+                            <th>الوصف</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>sh</strong></td>
+                            <td>صدفة بورن (Bourne Shell)</td>
+                            <td>صدفة Unix الأصلية، كتبها ستيفن بورن. بسيطة وقابلة للنقل.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>bash</strong></td>
+                            <td>صدفة بورن المحسنة (Bourne Again Shell)</td>
+                            <td>نسخة محسنة من sh؛ الافتراضية في معظم توزيعات لينكس.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>csh / tcsh</strong></td>
+                            <td>صدفة C</td>
+                            <td>بنية مشابهة للغة C؛ شائعة بين مستخدمي BSD Unix.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ksh</strong></td>
+                            <td>صدفة كورن (Korn Shell)</td>
+                            <td>تجمع ميزات sh و csh؛ تُستخدم في أنظمة Unix التجارية.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>zsh</strong></td>
+                            <td>صدفة Z</td>
+                            <td>صدفة بورن موسعة مع تحسينات كثيرة؛ الافتراضية في macOS.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">مثال على أوامر صدفة بورن</h3>
+                </div>
+                <div class="shell-example">
+                    <div class="shell-header">صدفة بورن (sh)</div>
+                    <div class="shell-body">
+                        <code class="shell-prompt">$ ls -la /home</code>
+                        <code class="shell-output">total 12</code>
+                        <code class="shell-output">drwxr-xr-x  3 root  root  4096 Jan 10 09:00 .</code>
+                        <code class="shell-output">drwxr-xr-x 20 root  root  4096 Jan 10 09:00 ..</code>
+                        <code class="shell-output">drwxr-xr-x  5 user  user  4096 Jan 10 10:30 user</code>
+                        <code class="shell-prompt">$ cp source.txt dest.txt</code>
+                        <code class="shell-prompt">$ echo "Hello, OS World!"</code>
+                        <code class="shell-output">Hello, OS World!</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> الصدفة هي مجرد برنامج مستخدم -- وليست جزءاً من النواة. إضافة أوامر جديدة لا تتطلب تعديل الصدفة عندما تُنفذ الأوامر كبرامج خارجية.</p>
+            </div>
+        </section>
+
+        <!-- Section 4: Graphical User Interface -->
+        <section id="gui" class="content-section">
+            <h2>4. واجهة المستخدم الرسومية (GUI)</h2>
+
+            <div class="definition">
+                <h3>ما هي واجهة المستخدم الرسومية؟</h3>
+                <p><strong>واجهة المستخدم الرسومية (GUI)</strong> توفر واجهة سطح مكتب مجازية سهلة الاستخدام. بدلاً من كتابة الأوامر، يتفاعل المستخدمون مع عناصر مرئية باستخدام جهاز تأشير (فأرة، لوحة لمس) ولوحة المفاتيح.</p>
+            </div>
+
+            <article class="os-component">
+                <h4>مجاز سطح المكتب</h4>
+                <p>تستخدم واجهة المستخدم الرسومية <strong>مجاز سطح المكتب</strong> حيث تمثل الشاشة مكتباً، وتُمثل الملفات كأيقونات على ذلك المكتب:</p>
+                <ul>
+                    <li><strong>الأيقونات</strong> تمثل الملفات والبرامج والمجلدات وإجراءات النظام</li>
+                    <li><strong>الفأرة/المؤشر</strong> يُستخدم للتنقل والتحديد والتفاعل مع الكائنات</li>
+                    <li><strong>النوافذ</strong> تعرض محتويات المجلدات والتطبيقات قيد التشغيل</li>
+                    <li><strong>القوائم</strong> توفر قوائم بالإجراءات والإعدادات المتاحة</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>واجهات الشاشة اللمسية</h4>
+                <p>تجاوزت الأجهزة الحديثة واجهة المستخدم الرسومية التقليدية القائمة على الفأرة إلى <strong>واجهات الشاشة اللمسية</strong>:</p>
+                <ul>
+                    <li><strong>الإيماءات</strong> تحل محل نقرات الفأرة -- النقر، التمرير، التكبير بالقرص</li>
+                    <li><strong>لوحة مفاتيح افتراضية</strong> تظهر على الشاشة عند الحاجة لإدخال نص</li>
+                    <li><strong>لا حاجة لفأرة أو لوحة مفاتيح فعلية</strong> للتفاعل الأساسي</li>
+                    <li>شائعة في <strong>الهواتف الذكية والأجهزة اللوحية</strong> (iOS، Android)</li>
+                </ul>
+            </article>
+
+            <h3>أمثلة على واجهات المستخدم الرسومية عبر أنظمة التشغيل</h3>
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">تطور واجهات المستخدم</h3>
+                </div>
+                <div class="ui-evolution">
+                    <div class="ui-era">
+                        <div class="ui-era-header era-cli">عصر CLI</div>
+                        <div class="ui-era-body">
+                            <p><strong>السبعينات-الثمانينات</strong></p>
+                            <p>واجهة نصية فقط</p>
+                            <p>Unix، MS-DOS</p>
+                        </div>
+                    </div>
+                    <div class="ui-arrow">&#8592;</div>
+                    <div class="ui-era">
+                        <div class="ui-era-header era-gui">عصر GUI</div>
+                        <div class="ui-era-body">
+                            <p><strong>1984-الحاضر</strong></p>
+                            <p>مجاز سطح المكتب، WIMP</p>
+                            <p>Mac OS، Windows، GNOME</p>
+                        </div>
+                    </div>
+                    <div class="ui-arrow">&#8592;</div>
+                    <div class="ui-era">
+                        <div class="ui-era-header era-touch">عصر اللمس</div>
+                        <div class="ui-era-body">
+                            <p><strong>2007-الحاضر</strong></p>
+                            <p>إيماءات، واجهة طبيعية</p>
+                            <p>iOS، Android</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <article class="os-component">
+                <h4>واجهة Mac OS X</h4>
+                <p>يوفر Mac OS X مثالاً معروفاً على واجهة مستخدم رسومية حديثة، تتميز بـ:</p>
+                <ul>
+                    <li><strong>واجهة Aqua</strong> مع شريط Dock لتشغيل التطبيقات</li>
+                    <li><strong>Finder</strong> للتنقل في نظام الملفات</li>
+                    <li><strong>Spotlight</strong> للبحث على مستوى النظام</li>
+                    <li>تجمع بين GUI وسطر أوامر Unix قوي (Terminal.app)</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> العديد من الأنظمة الآن تتضمن واجهتي CLI و GUI. مديرو النظام والمستخدمون المتقدمون يفضلون غالباً CLI للكفاءة وقابلية البرمجة، بينما يفضل المستخدمون العاديون GUI لسهولة الاستخدام. معظم أنظمة التشغيل توفر كليهما.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: System Calls -->
+        <section id="system-calls" class="content-section">
+            <h2>5. استدعاءات النظام</h2>
+
+            <div class="definition">
+                <h3>ما هي استدعاءات النظام؟</h3>
+                <p>توفر <strong>استدعاءات النظام</strong> واجهة البرمجة للخدمات التي يقدمها نظام التشغيل. وهي الآلية الرئيسية التي يطلب من خلالها برنامج مستوى المستخدم خدمة من النواة. تُكتب استدعاءات النظام عادةً بلغة عالية المستوى (C أو C++)، رغم أن بعض المهام منخفضة المستوى قد تتطلب لغة التجميع.</p>
+            </div>
+
+            <h3>واجهات برمجة التطبيقات (APIs)</h3>
+            <p>بدلاً من استدعاء استدعاءات النظام مباشرة، تصل البرامج غالباً إليها من خلال <strong>واجهة برمجة تطبيقات (API)</strong> عالية المستوى. أكثر ثلاث واجهات برمجة تطبيقات شيوعاً هي:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">واجهات برمجة استدعاءات النظام الرئيسية</h3>
+                </div>
+                <div class="api-cards">
+                    <div class="api-card api-win32">
+                        <h4>Win32 API</h4>
+                        <p>لأنظمة Windows</p>
+                        <p class="api-detail">تُستخدم بواسطة جميع تطبيقات Windows؛ توفر الوصول إلى خدمات نواة Windows.</p>
+                    </div>
+                    <div class="api-card api-posix">
+                        <h4>POSIX API</h4>
+                        <p>للأنظمة المبنية على POSIX</p>
+                        <p class="api-detail">تغطي عملياً جميع إصدارات UNIX و Linux و macOS. محددة بمعيار IEEE.</p>
+                    </div>
+                    <div class="api-card api-java">
+                        <h4>Java API</h4>
+                        <p>لآلة جافا الافتراضية</p>
+                        <p class="api-detail">واجهة مستقلة عن المنصة؛ JVM تترجم إلى استدعاءات النظام الأصلية.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>مثال: نسخ ملف</h3>
+            <p>عملية بسيطة مثل نسخ ملف تتضمن <strong>العديد من استدعاءات النظام</strong>. تأمل تسلسل العمليات:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">استدعاءات النظام في عملية نسخ ملف</h3>
+                </div>
+                <div class="syscall-sequence">
+                    <div class="syscall-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <strong>الحصول على اسم ملف الإدخال</strong>
+                            <p>مطالبة المستخدم / القراءة من سطر الأوامر</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <strong>فتح ملف الإدخال</strong>
+                            <p>استدعاء نظام: <code>open()</code> -- قد يفشل إذا لم يكن الملف موجوداً</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <strong>الحصول على اسم ملف الإخراج</strong>
+                            <p>مطالبة المستخدم / القراءة من سطر الأوامر</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <strong>إنشاء ملف الإخراج</strong>
+                            <p>استدعاء نظام: <code>create()</code> -- قد يفشل إذا كان الملف موجوداً بالفعل</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <strong>حلقة: القراءة من الإدخال، الكتابة إلى الإخراج</strong>
+                            <p>استدعاءات نظام: <code>read()</code> و <code>write()</code> -- تتكرر حتى نهاية الملف</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <strong>إغلاق كلا الملفين</strong>
+                            <p>استدعاءات نظام: <code>close()</code> لكل من ملف الإدخال وملف الإخراج</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">7</div>
+                        <div class="step-content">
+                            <strong>إنهاء البرنامج</strong>
+                            <p>عرض رسالة الإكمال أو الخطأ؛ العودة إلى الصدفة</p>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">حتى عملية نسخ ملف بسيطة تتطلب عشرات استدعاءات النظام خلف الكواليس.</p>
+            </div>
+
+            <h3>مثال على API قياسي: <code>read()</code></h3>
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">استدعاء النظام POSIX read()</h3>
+                </div>
+                <div class="api-example">
+                    <div class="api-signature">
+                        <code>ssize_t read(int fd, void *buf, size_t count)</code>
+                    </div>
+                    <table class="api-params">
+                        <thead>
+                            <tr>
+                                <th>المعامل</th>
+                                <th>النوع</th>
+                                <th>الوصف</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>fd</code></td>
+                                <td>int</td>
+                                <td>واصف الملف -- عدد صحيح يحدد الملف المفتوح</td>
+                            </tr>
+                            <tr>
+                                <td><code>buf</code></td>
+                                <td>void *</td>
+                                <td>مؤشر إلى مخزن مؤقت حيث ستُخزن البيانات</td>
+                            </tr>
+                            <tr>
+                                <td><code>count</code></td>
+                                <td>size_t</td>
+                                <td>العدد الأقصى من البايتات للقراءة</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="api-return">
+                        <strong>يُرجع:</strong> عدد البايتات المقروءة فعلياً، أو 0 عند نهاية الملف، أو -1 عند حدوث خطأ.
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> نادراً ما يستخدم المبرمجون استدعاءات النظام مباشرة. بدلاً من ذلك، يستخدمون واجهات برمجة تطبيقات عالية المستوى تترجم داخلياً إلى استدعاءات النظام المناسبة. هذا التجريد يجعل البرامج أكثر قابلية للنقل عبر أنظمة التشغيل المختلفة.</p>
+            </div>
+        </section>
+
+        <!-- Section 6: System Call Implementation -->
+        <section id="system-call-impl" class="content-section">
+            <h2>6. تنفيذ استدعاءات النظام</h2>
+
+            <div class="definition">
+                <h3>كيف تعمل استدعاءات النظام</h3>
+                <p>كل استدعاء نظام مرتبط بـ <strong>رقم</strong>. تحتفظ واجهة استدعاءات النظام بجدول مفهرس بهذه الأرقام. عند استدعاء استدعاء نظام، تستدعي الواجهة استدعاء النظام المقصود في نواة نظام التشغيل وتُرجع الحالة وأي قيم إرجاع.</p>
+            </div>
+
+            <h3>آلية استدعاء النظام</h3>
+            <p>لا يحتاج المستدعي لمعرفة أي شيء عن كيفية تنفيذ استدعاء النظام -- يحتاج فقط لمعرفة الـ API وفهم ما سيفعله نظام التشغيل نتيجة للاستدعاء:</p>
+            <ul>
+                <li>واجهة الـ API تخفي معظم تفاصيل واجهة نظام التشغيل عن المبرمج</li>
+                <li>مكتبة دعم وقت التشغيل (مثل مكتبة C) تدير واجهة استدعاءات النظام</li>
+                <li>تُمرر المعاملات عبر المسجلات أو المكدس أو كتل الذاكرة حسب نظام التشغيل</li>
+            </ul>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">علاقة API -- استدعاء النظام -- نظام التشغيل</h3>
+                </div>
+                <div class="syscall-flow">
+                    <div class="flow-box flow-user">
+                        <div class="flow-label">تطبيق المستخدم</div>
+                        <div class="flow-detail">يستدعي دالة API<br>(مثل <code>read()</code>)</div>
+                    </div>
+                    <div class="flow-arrow">&#8595;</div>
+                    <div class="flow-box flow-api">
+                        <div class="flow-label">API / مكتبة وقت التشغيل</div>
+                        <div class="flow-detail">تترجم إلى استدعاء نظام<br>تُعد المعاملات ورقم الاستدعاء</div>
+                    </div>
+                    <div class="flow-arrow">&#8595;</div>
+                    <div class="flow-box flow-interface">
+                        <div class="flow-label">واجهة استدعاءات النظام</div>
+                        <div class="flow-detail">تنتقل إلى وضع النواة<br>تبحث عن الاستدعاء في جدول الإرسال</div>
+                    </div>
+                    <div class="flow-arrow">&#8595;</div>
+                    <div class="flow-box flow-kernel">
+                        <div class="flow-label">نواة نظام التشغيل</div>
+                        <div class="flow-detail">تنفذ معالج استدعاء النظام<br>تؤدي العملية المطلوبة</div>
+                    </div>
+                    <div class="flow-arrow">&#8593;</div>
+                    <div class="flow-box flow-return">
+                        <div class="flow-label">العودة إلى المستخدم</div>
+                        <div class="flow-detail">تُمرر الحالة وقيم الإرجاع<br>عبر API إلى التطبيق</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>طرق تمرير المعاملات</h3>
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">طرق تمرير المعاملات لاستدعاءات النظام</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الطريقة</th>
+                            <th>كيف تعمل</th>
+                            <th>القيود</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>المسجلات (Registers)</strong></td>
+                            <td>تُمرر المعاملات في مسجلات المعالج</td>
+                            <td>محدودة بعدد المسجلات المتاحة</td>
+                        </tr>
+                        <tr>
+                            <td><strong>كتلة / جدول (Block)</strong></td>
+                            <td>تُخزن المعاملات في كتلة ذاكرة؛ عنوان الكتلة يُمرر في مسجل</td>
+                            <td>حاجة لوصول إضافي للذاكرة</td>
+                        </tr>
+                        <tr>
+                            <td><strong>المكدس (Stack)</strong></td>
+                            <td>تُدفع المعاملات إلى المكدس بواسطة البرنامج؛ يسحبها نظام التشغيل</td>
+                            <td>قيود حجم المكدس</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="diagram-note">طريقتا الكتلة والمكدس لا تحدان عدد أو طول المعاملات المُمررة. يستخدم لينكس مزيجاً من المسجلات والمكدس.</p>
+            </div>
+
+            <div class="key-message">
+                <p><strong>فكرة أساسية:</strong> توفر واجهة استدعاءات النظام فصلاً نظيفاً بين برامج المستخدم والنواة. يرى برنامج المستخدم واجهة الـ API فقط؛ بينما تنفذ النواة الخدمة الفعلية. هذا الفصل يسمح لأي من الجانبين بالتغيير دون التأثير على الآخر.</p>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary" class="content-section summary">
+            <h2>الملخص والنقاط الرئيسية</h2>
+
+            <h3>ما تعلمناه</h3>
+            <ol>
+                <li><strong>خدمات نظام التشغيل توفر وظائف أساسية</strong> - يقدم نظام التشغيل خدمات لواجهات المستخدم وتنفيذ البرامج والإدخال/الإخراج وأنظمة الملفات والاتصالات واكتشاف الأخطاء لدعم برامج المستخدم.</li>
+
+                <li><strong>خدمات تشغيل النظام تضمن الكفاءة</strong> - تخصيص الموارد والتسجيل وخدمات الحماية/الأمان تضمن تشغيل النظام بكفاءة وأمان لجميع المستخدمين.</li>
+
+                <li><strong>واجهات المستخدم تأتي بأشكال عديدة</strong> - واجهات CLI و GUI والشاشة اللمسية والدُفعات تخدم كل منها حالات استخدام مختلفة. الأنظمة الحديثة عادةً توفر CLI و GUI معاً.</li>
+
+                <li><strong>مفسر سطر الأوامر (الصدفة) أداة قوية</strong> - أصداف مثل صدفة بورن و bash و zsh تسمح بتنفيذ الأوامر مباشرة. يمكن أن تكون الأوامر مدمجة في الصدفة أو مُنفذة كبرامج خارجية.</li>
+
+                <li><strong>واجهات المستخدم الرسومية توفر تفاعلاً مرئياً</strong> - مجاز سطح المكتب مع النوافذ والأيقونات والقوائم يجعل الحوسبة في متناول الجميع. واجهات اللمس تمتد لتشمل الأجهزة المحمولة.</li>
+
+                <li><strong>استدعاءات النظام هي البوابة لخدمات نظام التشغيل</strong> - يتم الوصول إلى كل خدمة من خدمات نظام التشغيل من خلال استدعاءات النظام. حتى العمليات البسيطة مثل نسخ ملف تتطلب العديد من استدعاءات النظام.</li>
+
+                <li><strong>واجهات الـ API تُجرد استدعاءات النظام</strong> - واجهات Win32 و POSIX و Java توفر واجهات عالية المستوى وقابلة للنقل حتى نادراً ما يحتاج المبرمجون لإجراء استدعاءات النظام مباشرة.</li>
+
+                <li><strong>آلية استدعاء النظام تستخدم جدول إرسال</strong> - جدول مرقم يربط استدعاءات الـ API بدوال النواة، مع تمرير المعاملات عبر المسجلات أو كتل الذاكرة أو المكدس.</li>
+            </ol>
+
+            <div class="key-message">
+                <p><strong>نظرة للأمام:</strong> في الجلسات القادمة، سنستكشف بنية نظام التشغيل بالتفصيل، مع فحص البنى المتجانسة والطبقية والنواة الصغيرة والوحدية والهجينة، بالإضافة إلى استراتيجيات تصميم وتنفيذ أنظمة التشغيل.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <section id="image-credits">
+            <h2>الاعتمادات والإسنادات</h2>
+            <p class="credits-intro">جميع الرسوم البيانية في هذا المستند هي أعمال تعليمية أصلية تم إنشاؤها خصيصاً لهذا المقرر.</p>
+            <ul class="credits-list">
+                <li><strong>العرض الطبقي لخدمات نظام التشغيل:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>جدول الأصداف:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>الخط الزمني لتطور واجهات المستخدم:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>بطاقات الـ API:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>تسلسل استدعاءات النظام:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+                <li><strong>تدفق API-استدعاء النظام-نظام التشغيل:</strong> رسم تعليمي أصلي. مرخص تحت CC BY 4.0</li>
+            </ul>
+            <p class="credits-intro" style="margin-top: 1rem;">
+                <strong>الرخصة:</strong> جميع الرسوم البيانية مرخصة تحت رخصة المشاع الإبداعي - نسب المصنف 4.0 دولي (CC BY 4.0).
+            </p>
+        </section>
+    </footer>
+
+    <style>
+        /* === OS LAYERS DIAGRAM === */
+        .os-layers-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-width: 700px;
+            margin: 0 auto;
+            border: 3px solid var(--primary-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .os-layer {
+            padding: 1rem 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .os-layer:last-child {
+            border-bottom: none;
+        }
+
+        .layer-name {
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .layer-items {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+
+        .layer-users { background: #8e44ad; }
+        .layer-programs { background: #2980b9; }
+        .layer-ui { background: #3498db; }
+        .layer-syscalls { background: #e67e22; font-weight: 700; }
+        .layer-services { background: #27ae60; }
+        .layer-kernel { background: #16a085; }
+        .layer-hardware { background: #2c3e50; }
+
+        /* === SHELL EXAMPLE === */
+        .shell-example {
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+
+        .shell-header {
+            background: #333;
+            color: #fff;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .shell-body {
+            background: #1e1e1e;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .shell-prompt {
+            color: #4fc3f7;
+        }
+
+        .shell-output {
+            color: #a5d6a7;
+        }
+
+        /* === UI EVOLUTION === */
+        .ui-evolution {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .ui-era {
+            border-radius: 10px;
+            overflow: hidden;
+            min-width: 180px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .ui-era-header {
+            padding: 0.8rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .ui-era-body {
+            padding: 1rem;
+            background: #f8f9fa;
+            font-size: 0.9em;
+        }
+
+        .ui-era-body p {
+            margin: 0.2rem 0;
+        }
+
+        .era-cli { background: #2c3e50; }
+        .era-gui { background: #2980b9; }
+        .era-touch { background: #27ae60; }
+
+        .ui-arrow {
+            font-size: 2em;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .ui-evolution {
+                flex-direction: column;
+            }
+            .ui-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* === API CARDS === */
+        .api-cards {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .api-card {
+            flex: 1;
+            min-width: 200px;
+            max-width: 280px;
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .api-card h4 {
+            margin: 0 0 0.3rem 0;
+            font-size: 1.2em;
+            color: white;
+        }
+
+        .api-card p {
+            margin: 0.2rem 0;
+            font-size: 0.95em;
+        }
+
+        .api-detail {
+            font-size: 0.8em !important;
+            opacity: 0.9;
+            margin-top: 0.5rem !important;
+        }
+
+        .api-win32 { background: #2980b9; }
+        .api-posix { background: #e67e22; }
+        .api-java { background: #e74c3c; }
+
+        /* === SYSTEM CALL SEQUENCE === */
+        .syscall-sequence {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+
+        .syscall-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-right: 4px solid var(--primary-color);
+        }
+
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content strong {
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .step-content p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        /* === API EXAMPLE === */
+        .api-example {
+            padding: 1rem;
+        }
+
+        .api-signature {
+            background: #2c3e50;
+            color: #4fc3f7;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.05em;
+            text-align: center;
+            margin-bottom: 1rem;
+            direction: ltr;
+        }
+
+        .api-params {
+            width: 100%;
+        }
+
+        .api-return {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: #e8f5e9;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+
+        /* === SYSTEM CALL FLOW === */
+        .syscall-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 1.5rem;
+        }
+
+        .flow-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+
+        .flow-label {
+            font-weight: 700;
+            font-size: 1.05em;
+            margin-bottom: 0.3rem;
+        }
+
+        .flow-detail {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .flow-user { background: #8e44ad; }
+        .flow-api { background: #2980b9; }
+        .flow-interface { background: #e67e22; }
+        .flow-kernel { background: #27ae60; }
+        .flow-return { background: #16a085; }
+
+        .flow-arrow {
+            font-size: 1.5em;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        /* === CODE EXAMPLE === */
+        .code-example {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .code-example pre {
+            background: #2c3e50;
+            color: #4fc3f7;
+            padding: 0.8rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .code-example p {
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</body>
+</html>

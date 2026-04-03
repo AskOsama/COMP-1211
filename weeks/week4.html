@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 4: Operating-System Services</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switcher">
+        <a href="week4_ar.html" class="lang-button" title="Switch to Arabic">العربية</a>
+    </div>
+
+    <header>
+        <h1>Operating-System Services</h1>
+        <p class="subtitle">Week 4: OS Services, User Interfaces, and System Calls</p>
+    </header>
+
+    <nav class="table-of-contents no-print">
+        <h2>Contents</h2>
+        <ul>
+            <li><a href="#objectives">Learning Objectives</a></li>
+            <li><a href="#os-services">1. Operating-System Services</a></li>
+            <li><a href="#os-services-view">2. A View of Operating-System Services</a></li>
+            <li><a href="#cli">3. Command-Line Interpreter (CLI)</a></li>
+            <li><a href="#gui">4. Graphical User Interface (GUI)</a></li>
+            <li><a href="#system-calls">5. System Calls</a></li>
+            <li><a href="#system-call-impl">6. System Call Implementation</a></li>
+            <li><a href="#summary">Summary</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Learning Objectives -->
+        <section id="objectives" class="learning-objectives">
+            <h2>Learning Objectives</h2>
+            <p>By the end of this session, you will be able to:</p>
+            <ul>
+                <li>Identify services provided by an operating system</li>
+                <li>Illustrate how system calls are used to provide operating system services</li>
+                <li>Compare and contrast monolithic, layered, microkernel, modular, and hybrid strategies for designing operating systems</li>
+                <li>Illustrate the process for booting an operating system</li>
+                <li>Apply tools for monitoring operating system performance</li>
+                <li>Design and implement kernel modules for interacting with a Linux kernel</li>
+            </ul>
+        </section>
+
+        <!-- Section 1: Operating-System Services -->
+        <section id="os-services" class="content-section">
+            <h2>1. Operating-System Services</h2>
+
+            <div class="definition">
+                <h3>What Are OS Services?</h3>
+                <p>An operating system provides an environment for execution of programs and <strong>services</strong> to programs and users. These services differ from one OS to another, but certain common classes of services exist across all operating systems.</p>
+            </div>
+
+            <p>OS services can be divided into two categories: those that are <strong>helpful to the user</strong> and those that ensure <strong>efficient system operation</strong>.</p>
+
+            <h3>Services Helpful to the User</h3>
+
+            <article class="os-component">
+                <h4>User Interface (UI)</h4>
+                <p>Nearly all operating systems provide a <strong>user interface</strong>. This can take several forms:</p>
+                <ul>
+                    <li><strong>Command-Line Interface (CLI)</strong> - Uses text commands entered via keyboard</li>
+                    <li><strong>Graphics User Interface (GUI)</strong> - Window-based system with pointing device (mouse, trackpad)</li>
+                    <li><strong>Touch-Screen Interface</strong> - Gestures on a touch display (press, swipe, pinch)</li>
+                    <li><strong>Batch Interface</strong> - Commands and directives entered into files; executed without direct user interaction</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Program Execution</h4>
+                <p>The system must be able to <strong>load a program into memory and run it</strong>. The program must be able to end its execution, either normally or abnormally (indicating an error).</p>
+            </article>
+
+            <article class="os-component">
+                <h4>I/O Operations</h4>
+                <p>A running program may require I/O, involving a file or an I/O device. Users usually <strong>cannot control I/O devices directly</strong>, so the operating system must provide a means to do I/O.</p>
+            </article>
+
+            <article class="os-component">
+                <h4>File-System Manipulation</h4>
+                <p>Programs need to <strong>read and write files and directories</strong>, create and delete them, search for them, list file information, and manage permissions.</p>
+            </article>
+
+            <article class="os-component">
+                <h4>Communications</h4>
+                <p>Processes may need to exchange information with each other, on the same computer or between networked computers. Communication may be implemented via two models:</p>
+                <ul>
+                    <li><strong>Shared Memory</strong> - Two or more processes read and write to a shared region of memory</li>
+                    <li><strong>Message Passing</strong> - Packets of information are moved between processes by the operating system</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Error Detection</h4>
+                <p>The OS needs to be constantly aware of possible errors. Errors may occur in:</p>
+                <ul>
+                    <li><strong>CPU and memory hardware</strong> (e.g., memory error, power failure)</li>
+                    <li><strong>I/O devices</strong> (e.g., parity error on disk, connection failure on network)</li>
+                    <li><strong>User programs</strong> (e.g., arithmetic overflow, attempt to access illegal memory location)</li>
+                </ul>
+                <p>For each type of error, the OS should take the appropriate action to ensure correct and consistent computing.</p>
+            </article>
+
+            <h3>Services for Efficient System Operation</h3>
+
+            <article class="os-component">
+                <h4>Resource Allocation</h4>
+                <p>When multiple processes are running concurrently, resources must be allocated to each of them. The OS manages many types of resources:</p>
+                <ul>
+                    <li><strong>CPU scheduling</strong> - Determines which process gets the CPU and for how long</li>
+                    <li><strong>Memory allocation</strong> - Assigns memory blocks to processes</li>
+                    <li><strong>Device allocation</strong> - Manages access to I/O devices</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Logging</h4>
+                <p>The OS tracks how much and what kinds of computer resources each user or process uses. This record keeping may be used for:</p>
+                <ul>
+                    <li><strong>Accounting</strong> - Usage statistics for billing purposes</li>
+                    <li><strong>Performance tuning</strong> - Accumulating usage data to reconfigure the system for improved performance</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Protection and Security</h4>
+                <p>When several processes execute concurrently, it should not be possible for one process to interfere with the others or with the operating system itself:</p>
+                <ul>
+                    <li><strong>Protection</strong> - Ensures that all access to system resources is controlled</li>
+                    <li><strong>Security</strong> - Defends against external threats (e.g., denial-of-service attacks, worms, viruses) and requires user authentication to gain access to system resources</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> OS services form the bridge between user needs and hardware capabilities. Every action a user program performs -- from reading a file to displaying output -- ultimately relies on an OS service.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: A View of Operating-System Services -->
+        <section id="os-services-view" class="content-section">
+            <h2>2. A View of Operating-System Services</h2>
+
+            <div class="definition">
+                <h3>Layered View of OS Services</h3>
+                <p>Operating-system services can be visualized as a <strong>layered architecture</strong> where each layer provides services to the layer above and uses services from the layer below. This view shows how user programs interact with the OS through well-defined interfaces.</p>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Overview of Operating-System Services</h3>
+                </div>
+                <div class="os-layers-diagram">
+                    <div class="os-layer layer-users">
+                        <span class="layer-name">Users</span>
+                        <span class="layer-items">user 1 &nbsp; | &nbsp; user 2 &nbsp; | &nbsp; user 3 &nbsp; | &nbsp; ... &nbsp; | &nbsp; user n</span>
+                    </div>
+                    <div class="os-layer layer-programs">
+                        <span class="layer-name">System and Application Programs</span>
+                        <span class="layer-items">compiler &nbsp; | &nbsp; assembler &nbsp; | &nbsp; text editor &nbsp; | &nbsp; database system</span>
+                    </div>
+                    <div class="os-layer layer-ui">
+                        <span class="layer-name">User Interfaces</span>
+                        <span class="layer-items">GUI &nbsp; | &nbsp; batch &nbsp; | &nbsp; command line</span>
+                    </div>
+                    <div class="os-layer layer-syscalls">
+                        <span class="layer-name">System Calls</span>
+                    </div>
+                    <div class="os-layer layer-services">
+                        <span class="layer-name">OS Services</span>
+                        <span class="layer-items">program execution &nbsp; | &nbsp; I/O operations &nbsp; | &nbsp; file systems &nbsp; | &nbsp; communications &nbsp; | &nbsp; error detection</span>
+                    </div>
+                    <div class="os-layer layer-kernel">
+                        <span class="layer-name">OS Kernel Services</span>
+                        <span class="layer-items">resource allocation &nbsp; | &nbsp; logging &nbsp; | &nbsp; protection &amp; security</span>
+                    </div>
+                    <div class="os-layer layer-hardware">
+                        <span class="layer-name">Hardware</span>
+                        <span class="layer-items">CPU &nbsp; | &nbsp; memory &nbsp; | &nbsp; disks &nbsp; | &nbsp; network &nbsp; | &nbsp; I/O devices</span>
+                    </div>
+                </div>
+                <p class="diagram-note">Layered view showing how user programs access hardware through system calls and OS services. User-facing services sit above the system-call interface, while resource management services operate below.</p>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> The system-call interface acts as a boundary between user-level programs and kernel-level services. Everything above the system-call line runs in user mode; everything below runs in kernel mode.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Command-Line Interpreter -->
+        <section id="cli" class="content-section">
+            <h2>3. Command-Line Interpreter (CLI)</h2>
+
+            <div class="definition">
+                <h3>What is a CLI?</h3>
+                <p>The <strong>Command-Line Interpreter</strong> (also called a <strong>shell</strong>) allows direct command entry from the user. It is sometimes implemented in the kernel, sometimes by system programs. On systems with multiple command interpreters, the interpreters are known as <strong>shells</strong>.</p>
+            </div>
+
+            <p>The CLI fetches a command from the user and executes it. The primary function is to <strong>get and execute the next user-specified command</strong>.</p>
+
+            <h3>How CLI Commands Work</h3>
+            <p>Commands can be implemented in two ways:</p>
+            <article class="os-component">
+                <h4>Built-in Commands</h4>
+                <p>The command interpreter itself contains the code to execute the command. The number of commands determines the size of the CLI.</p>
+            </article>
+
+            <article class="os-component">
+                <h4>System Programs</h4>
+                <p>Commands are implemented through <strong>system programs</strong>. The CLI does not understand the command; it simply uses the command to identify a file to be loaded and executed. For example:</p>
+                <div class="code-example">
+                    <pre><code>$ rm file.txt</code></pre>
+                    <p>The shell searches for a file called <code>rm</code>, loads it into memory, and executes it with the parameter <code>file.txt</code>.</p>
+                </div>
+            </article>
+
+            <h3>Popular Shells</h3>
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Common Unix/Linux Shells</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Shell</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>sh</strong></td>
+                            <td>Bourne Shell</td>
+                            <td>The original Unix shell, written by Stephen Bourne. Simple and portable.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>bash</strong></td>
+                            <td>Bourne Again Shell</td>
+                            <td>Enhanced version of sh; the default on most Linux distributions.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>csh / tcsh</strong></td>
+                            <td>C Shell</td>
+                            <td>C-like syntax; popular among BSD Unix users.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ksh</strong></td>
+                            <td>Korn Shell</td>
+                            <td>Combines features of sh and csh; used in commercial Unix systems.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>zsh</strong></td>
+                            <td>Z Shell</td>
+                            <td>Extended Bourne shell with many improvements; default on macOS.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Bourne Shell Command Example</h3>
+                </div>
+                <div class="shell-example">
+                    <div class="shell-header">Bourne Shell (sh)</div>
+                    <div class="shell-body">
+                        <code class="shell-prompt">$ ls -la /home</code>
+                        <code class="shell-output">total 12</code>
+                        <code class="shell-output">drwxr-xr-x  3 root  root  4096 Jan 10 09:00 .</code>
+                        <code class="shell-output">drwxr-xr-x 20 root  root  4096 Jan 10 09:00 ..</code>
+                        <code class="shell-output">drwxr-xr-x  5 user  user  4096 Jan 10 10:30 user</code>
+                        <code class="shell-prompt">$ cp source.txt dest.txt</code>
+                        <code class="shell-prompt">$ echo "Hello, OS World!"</code>
+                        <code class="shell-output">Hello, OS World!</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> The shell is just a user program -- it is not part of the kernel. Adding new commands does not require modifying the shell when commands are implemented as external programs.</p>
+            </div>
+        </section>
+
+        <!-- Section 4: Graphical User Interface -->
+        <section id="gui" class="content-section">
+            <h2>4. Graphical User Interface (GUI)</h2>
+
+            <div class="definition">
+                <h3>What is a GUI?</h3>
+                <p>A <strong>Graphical User Interface (GUI)</strong> provides a user-friendly desktop metaphor interface. Instead of typing commands, users interact with visual elements using a pointing device (mouse, trackpad) and keyboard.</p>
+            </div>
+
+            <article class="os-component">
+                <h4>Desktop Metaphor</h4>
+                <p>The GUI uses a <strong>desktop metaphor</strong> where the screen represents a desk, and files are represented as icons on that desk:</p>
+                <ul>
+                    <li><strong>Icons</strong> represent files, programs, folders, and system actions</li>
+                    <li><strong>Mouse/pointer</strong> is used to navigate, select, and interact with objects</li>
+                    <li><strong>Windows</strong> display the contents of folders and running applications</li>
+                    <li><strong>Menus</strong> provide lists of available actions and settings</li>
+                </ul>
+            </article>
+
+            <article class="os-component">
+                <h4>Touch-Screen Interfaces</h4>
+                <p>Modern devices have moved beyond the traditional mouse-based GUI to <strong>touch-screen interfaces</strong>:</p>
+                <ul>
+                    <li><strong>Gestures</strong> replace mouse clicks -- tap, swipe, pinch-to-zoom</li>
+                    <li><strong>Virtual keyboard</strong> appears on screen when text input is needed</li>
+                    <li><strong>No mouse or physical keyboard</strong> needed for basic interaction</li>
+                    <li>Common on <strong>smartphones and tablets</strong> (iOS, Android)</li>
+                </ul>
+            </article>
+
+            <h3>GUI Examples Across Operating Systems</h3>
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Evolution of User Interfaces</h3>
+                </div>
+                <div class="ui-evolution">
+                    <div class="ui-era">
+                        <div class="ui-era-header era-cli">CLI Era</div>
+                        <div class="ui-era-body">
+                            <p><strong>1970s-1980s</strong></p>
+                            <p>Text-only interface</p>
+                            <p>Unix, MS-DOS</p>
+                        </div>
+                    </div>
+                    <div class="ui-arrow">&#8594;</div>
+                    <div class="ui-era">
+                        <div class="ui-era-header era-gui">GUI Era</div>
+                        <div class="ui-era-body">
+                            <p><strong>1984-present</strong></p>
+                            <p>Desktop metaphor, WIMP</p>
+                            <p>Mac OS, Windows, GNOME</p>
+                        </div>
+                    </div>
+                    <div class="ui-arrow">&#8594;</div>
+                    <div class="ui-era">
+                        <div class="ui-era-header era-touch">Touch Era</div>
+                        <div class="ui-era-body">
+                            <p><strong>2007-present</strong></p>
+                            <p>Gestures, natural UI</p>
+                            <p>iOS, Android</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <article class="os-component">
+                <h4>Mac OS X Interface</h4>
+                <p>Mac OS X provides a well-known example of a modern GUI, featuring:</p>
+                <ul>
+                    <li><strong>Aqua interface</strong> with the Dock for launching applications</li>
+                    <li><strong>Finder</strong> for file system navigation</li>
+                    <li><strong>Spotlight</strong> for system-wide search</li>
+                    <li>Combines GUI with a powerful Unix-based CLI (Terminal.app)</li>
+                </ul>
+            </article>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> Many systems now include both CLI and GUI interfaces. System administrators and power users often prefer the CLI for efficiency and scriptability, while casual users prefer the GUI for ease of use. Most operating systems provide both.</p>
+            </div>
+        </section>
+
+        <!-- Section 5: System Calls -->
+        <section id="system-calls" class="content-section">
+            <h2>5. System Calls</h2>
+
+            <div class="definition">
+                <h3>What Are System Calls?</h3>
+                <p><strong>System calls</strong> provide the programming interface to the services provided by the operating system. They are the primary mechanism by which a user-level program requests a service from the kernel. System calls are typically written in a high-level language (C or C++), although some low-level tasks may require assembly language.</p>
+            </div>
+
+            <h3>Application Programming Interfaces (APIs)</h3>
+            <p>Rather than invoking system calls directly, programs mostly access them through a high-level <strong>Application Programming Interface (API)</strong>. The three most common APIs are:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Major System Call APIs</h3>
+                </div>
+                <div class="api-cards">
+                    <div class="api-card api-win32">
+                        <h4>Win32 API</h4>
+                        <p>For Windows systems</p>
+                        <p class="api-detail">Used by all Windows applications; provides access to Windows kernel services.</p>
+                    </div>
+                    <div class="api-card api-posix">
+                        <h4>POSIX API</h4>
+                        <p>For POSIX-based systems</p>
+                        <p class="api-detail">Covers virtually all versions of UNIX, Linux, and macOS. Defined by IEEE standard.</p>
+                    </div>
+                    <div class="api-card api-java">
+                        <h4>Java API</h4>
+                        <p>For the Java Virtual Machine</p>
+                        <p class="api-detail">Platform-independent API; JVM translates to native system calls.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Example: Copying a File</h3>
+            <p>A simple operation like copying a file involves <strong>many system calls</strong>. Consider the sequence of operations:</p>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">System Calls in a File Copy Operation</h3>
+                </div>
+                <div class="syscall-sequence">
+                    <div class="syscall-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <strong>Acquire input file name</strong>
+                            <p>Prompt user / read from command line</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <strong>Open input file</strong>
+                            <p>System call: <code>open()</code> -- may fail if file does not exist</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <strong>Acquire output file name</strong>
+                            <p>Prompt user / read from command line</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <strong>Create output file</strong>
+                            <p>System call: <code>create()</code> -- may fail if file already exists</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <strong>Loop: Read from input, Write to output</strong>
+                            <p>System calls: <code>read()</code> and <code>write()</code> -- repeated until end of file</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <strong>Close both files</strong>
+                            <p>System calls: <code>close()</code> for both input and output files</p>
+                        </div>
+                    </div>
+                    <div class="syscall-step">
+                        <div class="step-number">7</div>
+                        <div class="step-content">
+                            <strong>Terminate program</strong>
+                            <p>Display completion message or error; return to shell</p>
+                        </div>
+                    </div>
+                </div>
+                <p class="diagram-note">Even a simple file copy requires dozens of system calls behind the scenes.</p>
+            </div>
+
+            <h3>Standard API Example: <code>read()</code></h3>
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">POSIX read() System Call</h3>
+                </div>
+                <div class="api-example">
+                    <div class="api-signature">
+                        <code>ssize_t read(int fd, void *buf, size_t count)</code>
+                    </div>
+                    <table class="api-params">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>fd</code></td>
+                                <td>int</td>
+                                <td>File descriptor -- an integer identifying the open file</td>
+                            </tr>
+                            <tr>
+                                <td><code>buf</code></td>
+                                <td>void *</td>
+                                <td>Pointer to a buffer where data will be stored</td>
+                            </tr>
+                            <tr>
+                                <td><code>count</code></td>
+                                <td>size_t</td>
+                                <td>Maximum number of bytes to read</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="api-return">
+                        <strong>Returns:</strong> Number of bytes actually read, 0 at end of file, or -1 on error.
+                    </div>
+                </div>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> Programmers rarely use system calls directly. Instead, they use higher-level APIs that internally translate into the appropriate system calls. This abstraction makes programs more portable across different operating systems.</p>
+            </div>
+        </section>
+
+        <!-- Section 6: System Call Implementation -->
+        <section id="system-call-impl" class="content-section">
+            <h2>6. System Call Implementation</h2>
+
+            <div class="definition">
+                <h3>How System Calls Work</h3>
+                <p>Each system call is associated with a <strong>number</strong>. The system-call interface maintains a table indexed by these numbers. When a system call is invoked, the interface invokes the intended system call in the OS kernel and returns the status and any return values.</p>
+            </div>
+
+            <h3>The System Call Mechanism</h3>
+            <p>The caller does not need to know anything about how the system call is implemented -- it only needs to know the API and understand what the OS will do as a result of the call:</p>
+            <ul>
+                <li>The API hides most details of the OS interface from the programmer</li>
+                <li>The runtime support library (e.g., C library) manages the system-call interface</li>
+                <li>Parameters are passed via registers, stack, or memory blocks depending on the OS</li>
+            </ul>
+
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">API -- System Call -- OS Relationship</h3>
+                </div>
+                <div class="syscall-flow">
+                    <div class="flow-box flow-user">
+                        <div class="flow-label">User Application</div>
+                        <div class="flow-detail">Calls API function<br>(e.g., <code>read()</code>)</div>
+                    </div>
+                    <div class="flow-arrow">&#8595;</div>
+                    <div class="flow-box flow-api">
+                        <div class="flow-label">API / Runtime Library</div>
+                        <div class="flow-detail">Translates to system call<br>Sets up parameters &amp; call number</div>
+                    </div>
+                    <div class="flow-arrow">&#8595;</div>
+                    <div class="flow-box flow-interface">
+                        <div class="flow-label">System-Call Interface</div>
+                        <div class="flow-detail">Traps to kernel mode<br>Looks up call in dispatch table</div>
+                    </div>
+                    <div class="flow-arrow">&#8595;</div>
+                    <div class="flow-box flow-kernel">
+                        <div class="flow-label">OS Kernel</div>
+                        <div class="flow-detail">Executes system call handler<br>Performs requested operation</div>
+                    </div>
+                    <div class="flow-arrow">&#8593;</div>
+                    <div class="flow-box flow-return">
+                        <div class="flow-label">Return to User</div>
+                        <div class="flow-detail">Status &amp; return values passed back<br>through API to application</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Parameter Passing Methods</h3>
+            <div class="diagram-container">
+                <div class="diagram-title-section">
+                    <h3 class="diagram-title">Methods for Passing Parameters to System Calls</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>How It Works</th>
+                            <th>Limitations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Registers</strong></td>
+                            <td>Parameters passed in CPU registers</td>
+                            <td>Limited by number of available registers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Block / Table</strong></td>
+                            <td>Parameters stored in a memory block; address of block passed in a register</td>
+                            <td>Extra memory access needed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Stack</strong></td>
+                            <td>Parameters pushed onto the stack by the program; popped off by the OS</td>
+                            <td>Stack size limitations</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="diagram-note">The block and stack methods do not limit the number or length of parameters being passed. Linux uses a combination of registers and stack.</p>
+            </div>
+
+            <div class="key-message">
+                <p><strong>Key Insight:</strong> The system-call interface provides a clean separation between user programs and the kernel. The user program sees only the API; the kernel implements the actual service. This separation allows either side to change without affecting the other.</p>
+            </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary" class="content-section summary">
+            <h2>Summary and Key Takeaways</h2>
+
+            <h3>What We've Learned</h3>
+            <ol>
+                <li><strong>OS Services provide essential functionality</strong> - The operating system offers services for user interfaces, program execution, I/O, file systems, communications, and error detection to support user programs.</li>
+
+                <li><strong>System operation services ensure efficiency</strong> - Resource allocation, logging, and protection/security services ensure the system runs efficiently and securely for all users.</li>
+
+                <li><strong>User interfaces come in many forms</strong> - CLI, GUI, touch-screen, and batch interfaces each serve different use cases. Modern systems typically offer both CLI and GUI.</li>
+
+                <li><strong>The CLI (shell) is a powerful tool</strong> - Shells like Bourne Shell, bash, and zsh allow direct command execution. Commands can be built into the shell or implemented as external programs.</li>
+
+                <li><strong>GUIs provide visual interaction</strong> - The desktop metaphor with windows, icons, and menus makes computing accessible. Touch interfaces extend this to mobile devices.</li>
+
+                <li><strong>System calls are the gateway to OS services</strong> - Every OS service is accessed through system calls. Even simple operations like file copy require many system calls.</li>
+
+                <li><strong>APIs abstract system calls</strong> - Win32, POSIX, and Java APIs provide portable, high-level interfaces so programmers rarely need to make system calls directly.</li>
+
+                <li><strong>The system-call mechanism uses a dispatch table</strong> - A numbered table maps API calls to kernel functions, with parameters passed via registers, memory blocks, or the stack.</li>
+            </ol>
+
+            <div class="key-message">
+                <p><strong>Looking Ahead:</strong> In upcoming sessions, we will explore OS structure in detail, examining monolithic, layered, microkernel, modular, and hybrid architectures, as well as OS design and implementation strategies.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <section id="image-credits">
+            <h2>Credits and Attributions</h2>
+            <p class="credits-intro">All diagrams in this document are original educational works created specifically for this course.</p>
+            <ul class="credits-list">
+                <li><strong>OS Services Layered View:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>Shell Examples Table:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>UI Evolution Timeline:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>API Cards:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>System Call Sequence:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+                <li><strong>API-System Call-OS Flow:</strong> Original educational diagram. Licensed under CC BY 4.0</li>
+            </ul>
+            <p class="credits-intro" style="margin-top: 1rem;">
+                <strong>License:</strong> All diagrams are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+            </p>
+        </section>
+    </footer>
+
+    <style>
+        /* === OS LAYERS DIAGRAM === */
+        .os-layers-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-width: 700px;
+            margin: 0 auto;
+            border: 3px solid var(--primary-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .os-layer {
+            padding: 1rem 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .os-layer:last-child {
+            border-bottom: none;
+        }
+
+        .layer-name {
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .layer-items {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+
+        .layer-users { background: #8e44ad; }
+        .layer-programs { background: #2980b9; }
+        .layer-ui { background: #3498db; }
+        .layer-syscalls { background: #e67e22; font-weight: 700; }
+        .layer-services { background: #27ae60; }
+        .layer-kernel { background: #16a085; }
+        .layer-hardware { background: #2c3e50; }
+
+        /* === SHELL EXAMPLE === */
+        .shell-example {
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+
+        .shell-header {
+            background: #333;
+            color: #fff;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .shell-body {
+            background: #1e1e1e;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .shell-prompt {
+            color: #4fc3f7;
+        }
+
+        .shell-output {
+            color: #a5d6a7;
+        }
+
+        /* === UI EVOLUTION === */
+        .ui-evolution {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .ui-era {
+            border-radius: 10px;
+            overflow: hidden;
+            min-width: 180px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .ui-era-header {
+            padding: 0.8rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .ui-era-body {
+            padding: 1rem;
+            background: #f8f9fa;
+            font-size: 0.9em;
+        }
+
+        .ui-era-body p {
+            margin: 0.2rem 0;
+        }
+
+        .era-cli { background: #2c3e50; }
+        .era-gui { background: #2980b9; }
+        .era-touch { background: #27ae60; }
+
+        .ui-arrow {
+            font-size: 2em;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .ui-evolution {
+                flex-direction: column;
+            }
+            .ui-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* === API CARDS === */
+        .api-cards {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .api-card {
+            flex: 1;
+            min-width: 200px;
+            max-width: 280px;
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .api-card h4 {
+            margin: 0 0 0.3rem 0;
+            font-size: 1.2em;
+            color: white;
+        }
+
+        .api-card p {
+            margin: 0.2rem 0;
+            font-size: 0.95em;
+        }
+
+        .api-detail {
+            font-size: 0.8em !important;
+            opacity: 0.9;
+            margin-top: 0.5rem !important;
+        }
+
+        .api-win32 { background: #2980b9; }
+        .api-posix { background: #e67e22; }
+        .api-java { background: #e74c3c; }
+
+        /* === SYSTEM CALL SEQUENCE === */
+        .syscall-sequence {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+
+        .syscall-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content strong {
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .step-content p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        /* === API EXAMPLE === */
+        .api-example {
+            padding: 1rem;
+        }
+
+        .api-signature {
+            background: #2c3e50;
+            color: #4fc3f7;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.05em;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .api-params {
+            width: 100%;
+        }
+
+        .api-return {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: #e8f5e9;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+
+        /* === SYSTEM CALL FLOW === */
+        .syscall-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 1.5rem;
+        }
+
+        .flow-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+
+        .flow-label {
+            font-weight: 700;
+            font-size: 1.05em;
+            margin-bottom: 0.3rem;
+        }
+
+        .flow-detail {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .flow-user { background: #8e44ad; }
+        .flow-api { background: #2980b9; }
+        .flow-interface { background: #e67e22; }
+        .flow-kernel { background: #27ae60; }
+        .flow-return { background: #16a085; }
+
+        .flow-arrow {
+            font-size: 1.5em;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        /* === CODE EXAMPLE === */
+        .code-example {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .code-example pre {
+            background: #2c3e50;
+            color: #4fc3f7;
+            padding: 0.8rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .code-example p {
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</body>
+</html>
